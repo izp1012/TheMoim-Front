@@ -1,8 +1,8 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../App.css';
-import { getDefaultGroup } from '../api/moimApp';
+import '../styles/App.css';
+import { getDefaultGroup, createGroup } from '../api/moimApp';
 import GroupAddForm from '../components/group/GroupAddForm'; // 그룹 추가 폼 재사용
 import DefaultAccountInfo from '../components/home/DefaultAccountInfo'; // 새로운 컴포넌트
 
@@ -40,6 +40,18 @@ function HomePage({ currentUsrId, onSelectGroup }) {
   const handleCreateGroupSuccess = (newGroup) => {
     setDefaultGroup(newGroup); // 새로 생성된 그룹을 기본 그룹으로 설정
     navigate(`/groups/${newGroup.id}/details`); // 새 그룹의 상세 페이지로 이동
+  };
+
+  const handleCreateGroupSuccessFromHome = async (groupData) => {
+    try {
+      const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
+      alert(`그룹 '${newGroup.groupName}'이(가) 생성되었습니다!`);
+      setDefaultGroup(newGroup); // 새로 생성된 그룹을 기본 그룹으로 설정
+      navigate(`/groups/${newGroup.id}/details`); // 새 그룹의 상세 페이지로 이동
+    } catch (err) {
+      alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
+      console.error("홈에서 그룹 생성 중 오류 발생:", err);
+    }
   };
 
   const handleManageGroupClick = () => {

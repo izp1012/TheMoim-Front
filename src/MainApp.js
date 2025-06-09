@@ -17,6 +17,7 @@ import ReceiptManagementPage from './components/payment/ReceiptManagementPage';
 // MainApp에서는 이제 더 이상 복잡한 탭 상태를 직접 관리하지 않습니다.
 // 라우터가 페이지를 결정하며, selectedGroupId는 HomePage 또는 GroupListPage에서 설정되어
 // props로 전달되거나 Context API로 관리됩니다.
+import { createGroup } from './api/moimApp';
 
 function MainApp({ currentUsrId, onLogout }) {
   const navigate = useNavigate();
@@ -39,6 +40,27 @@ function MainApp({ currentUsrId, onLogout }) {
     }
   }, [location.pathname]); // 경로가 변경될 때마다 실행
 
+  const handleCreateGroup = async (groupData) => {
+    try {
+      // API 호출: groupData (groupName, description)와 생성자 ID (currentUsrId)를 함께 보냄
+      const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
+      alert(`그룹 '${newGroup.groupName}'이(가) 성공적으로 생성되었습니다!`);
+
+      // 그룹 생성 성공 후, 그룹 목록 또는 새로 생성된 그룹의 상세 페이지로 이동
+      // 예를 들어, 생성된 그룹의 상세 페이지로 이동:
+      navigate(`/groups/${newGroup.id}/details`);
+      // 또는 그룹 목록으로 이동:
+      // navigate('/groups');
+
+      // 필요한 경우, 그룹 목록을 다시 불러오거나 상태를 업데이트
+      // (MainApp에서 모든 그룹 목록을 관리한다면, 여기에 업데이트 로직 추가)
+      // fetchGroups(); // 그룹 목록 새로고침
+    } catch (err) {
+      alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
+      console.error("그룹 생성 중 오류 발생:", err);
+    }
+  };
+
   // GroupListPage에서 그룹 선택 시 호출
   const handleSelectGroupFromList = (groupId) => {
     setSelectedGroupId(groupId);
@@ -54,6 +76,9 @@ function MainApp({ currentUsrId, onLogout }) {
 
           {/* 그룹 관리 라우트 */}
           <Route path="/groups" element={<GroupListPage onSelectGroup={handleSelectGroupFromList} />} />
+          {/* 그룹 추가 페이지 - 여기서 handleCreateGroup 함수를 onCreateGroup 프롭스로 전달 */}
+          <Route path="/groups/add" element={<GroupAddForm onCreateGroup={handleCreateGroup} onCancel={() => navigate('/groups')} />} />
+          
           <Route path="/groups/add" element={<GroupAddForm />} />
           {/* 그룹 상세 페이지 (하위 기능 포함) */}
           <Route path="/groups/:groupId/details" element={<GroupDetailsPage />} />

@@ -3,16 +3,16 @@ import React, { useState } from 'react';
 import '../../App.css';
 
 function GroupAddForm({ onCreateGroup, onCancel }) {
-  const [groupName, setGroupName] = useState('');
-  const [description, setDescription] = useState('');
+  const [moimName, setMoimName] = useState('');
+  const [moimDesp, setMoimDesp] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (groupName.trim() === '') {
+    if (moimName.trim() === '') {
       alert('모임 이름은 필수입니다.');
       return;
     }
-    onCreateGroup({ groupName, description });
+    onCreateGroup({ moimName, moimDesp });
   };
 
   return (
@@ -24,8 +24,8 @@ function GroupAddForm({ onCreateGroup, onCancel }) {
           <input
             type="text"
             placeholder="예: 우리 동호회, 가족 계 모임"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
+            value={moimName}
+            onChange={(e) => setMoimName(e.target.value)}
             className="input-field full-width"
             required
           />
@@ -34,8 +34,8 @@ function GroupAddForm({ onCreateGroup, onCancel }) {
           설명 (선택 사항)
           <textarea
             placeholder="모임에 대한 간략한 설명"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={moimDesp}
+            onChange={(e) => setMoimDesp(e.target.value)}
             className="input-field full-width textarea-field"
           ></textarea>
         </label>

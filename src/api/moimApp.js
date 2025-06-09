@@ -13,16 +13,15 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-  config => {
-    // console.log('Request Interceptor:', config);
-    // 예: 토큰이 있다면 모든 요청 헤더에 추가
-    // const token = localStorage.getItem('accessToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  (config) => {
+    const token = localStorage.getItem('jwt-token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  error => {
+  (error) => {
+    // 요청 에러 처리
     return Promise.reject(error);
   }
 );

@@ -37,7 +37,7 @@ function MemberAddForm({ onAddMember }) { // onAddMember prop은 GroupDetailsPag
         // memberId: (백엔드에서 자동으로 생성/매핑)
       };
       // onAddMember를 통해 상위 컴포넌트 (GroupDetailsPage)로 데이터 전달
-      await onAddMember(memberData); // 여기서 실제 addMemberToGroup API 호출이 이루어짐
+      await addMemberToGroup(memberData); // 여기서 실제 addMemberToGroup API 호출이 이루어짐
 
       // 폼 초기화
       setName('');
