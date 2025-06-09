@@ -1,24 +1,16 @@
 // src/api/moimApp.js
 import axios from 'axios';
 
-// Spring Boot 백엔드 서버의 기본 URL (개발 환경 기준)
-// React 환경 변수를 사용하여 환경별로 다르게 설정할 수 있습니다.
-// Create React App 기준: REACT_APP_ 접두사 사용
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1/meeting-account';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1'; // 기본 URL 변경
 
-// axios 인스턴스 생성
-// 매번 baseURL을 지정할 필요 없이, 공통 설정 및 인터셉터 적용 가능
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    // 'Authorization': `Bearer ${localStorage.getItem('token')}` // 인증 토큰이 있다면 추가
   },
-  timeout: 5000, // 5초 타임아웃
+  timeout: 5000,
 });
 
-// Axios 인터셉터 예시 (선택 사항)
-// 요청 전에 로딩 스피너 활성화, 토큰 추가 등
 api.interceptors.request.use(
   config => {
     // console.log('Request Interceptor:', config);
@@ -34,7 +26,6 @@ api.interceptors.request.use(
   }
 );
 
-// 응답 후에 로딩 스피너 비활성화, 에러 처리 등
 api.interceptors.response.use(
   response => {
     // console.log('Response Interceptor:', response);
@@ -50,113 +41,145 @@ api.interceptors.response.use(
   }
 );
 
+// --- 1. USR (앱 사용자/총무) 관련 API ---
+// 현재 로그인 기능이 없으므로, Usr 관련 API는 최소화. UsrGroup 생성 시 created_by_usr_id로 임시값 사용 가능
 
-// --- 사용자 관련 API 호출 (기존 `addUser`, `getAllUsers`) ---
-// Note: 현재 프로젝트 구조에서는 User 엔티티가 직접 사용되지 않고, Member 엔티티가 사용자 역할을 대체합니다.
-// 하지만 이전 코드에 있었으므로 일단 포함합니다. 필요 없으면 제거 가능.
-
-const addUser = async (userName) => {
+// --- 2. USR_GROUP (모임/단체) 관련 API ---
+const createGroup = async (groupData) => {
   try {
-    const response = await api.post('/users', { name: userName });
+    const response = await api.post('/groups', groupData); // /api/v1/groups
     return response.data;
   } catch (error) {
-    console.error('사용자 추가 실패:', error.response ? error.response.data : error.message);
+    console.error('그룹 생성 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-const getAllUsers = async () => {
+const getAllGroups = async (usrId) => { // 특정 총무의 그룹 목록을 가져올 수 있도록 usrId를 인자로 받음 (옵션)
   try {
-    const response = await api.get('/users');
+    const response = await api.get('/groups', { params: { usrId } }); // /api/v1/groups?usrId=...
     return response.data;
   } catch (error) {
-    console.error('사용자 목록 조회 실패:', error.response ? error.response.data : error.message);
+    console.error('그룹 목록 조회 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-// --- 금액/거래 관련 API 호출 (기존 `addTransaction`, `getAllTransactions`) ---
-
-const addTransaction = async (amount, description) => {
+const getGroupDetails = async (groupId) => {
   try {
-    const response = await api.post('/transactions', { amount, description });
+    const response = await api.get(`/groups/${groupId}`); // /api/v1/groups/{groupId}
     return response.data;
   } catch (error) {
-    console.error('금액 추가 실패:', error.response ? error.response.data : error.message);
+    console.error('그룹 상세 정보 조회 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-const getAllTransactions = async () => {
+
+// --- 3. MEMBER (실제 사람) 및 USR_GROUP_MEMBER (그룹 내 회원) 관련 API ---
+// 회원 추가 (특정 그룹에 회원 추가) - USR_GROUP_MEMBER 생성
+const addMemberToGroup = async (groupId, memberData) => { // memberData는 { name, contactInfo, role, defaultFee, etc. }
   try {
-    const response = await api.get('/transactions');
-    return response.data;
+    // 백엔드에서 Member를 먼저 생성하거나 조회하고, UsrGroupMember를 연결
+    const response = await api.post(`/groups/${groupId}/members`, memberData); // /api/v1/groups/{groupId}/members
+    return response.data; // UsrGroupMember 객체 반환 예상
   } catch (error) {
-    console.error('거래 목록 조회 실패:', error.response ? error.response.data : error.message);
+    console.error('그룹 회원 추가 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-// --- 사진 관련 API 호출 (기존 `uploadPhoto`, `getAllPhotos`) ---
+const getGroupMembers = async (groupId) => {
+  try {
+    const response = await api.get(`/groups/${groupId}/members`); // /api/v1/groups/{groupId}/members
+    return response.data; // UsrGroupMember 객체 목록 반환 예상
+  } catch (error) {
+    console.error('그룹 회원 목록 조회 실패:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
 
-const uploadPhoto = async (file) => {
+
+// --- 4. PAYMENT (모임비/결제) 관련 API ---
+const addPayment = async (groupId, paymentData) => { // paymentData는 { amount, type, description, payerMemberId, paymentDate }
+  try {
+    const response = await api.post(`/groups/${groupId}/payments`, paymentData); // /api/v1/groups/{groupId}/payments
+    return response.data;
+  } catch (error) {
+    console.error('결제/모임비 추가 실패:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+const getGroupPayments = async (groupId) => {
+  try {
+    const response = await api.get(`/groups/${groupId}/payments`); // /api/v1/groups/{groupId}/payments
+    return response.data;
+  } catch (error) {
+    console.error('결제/모임비 목록 조회 실패:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+// --- 5. RECEIPT_PHOTO (영수증) 관련 API ---
+const uploadReceiptPhoto = async (paymentId, file) => {
   try {
     const formData = new FormData();
-    formData.append('file', file); // 'file'은 Spring Boot 컨트롤러에서 @RequestParam("file")로 받을 이름
-
-    const response = await api.post('/photos/upload', formData, {
+    formData.append('file', file);
+    // 누가 업로드했는지 정보도 추가하려면 formData.append('uploaderId', currentUsrId);
+    
+    const response = await api.post(`/payments/${paymentId}/receipts`, formData, { // /api/v1/payments/{paymentId}/receipts
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
   } catch (error) {
-    console.error('사진 업로드 실패:', error.response ? error.response.data : error.message);
+    console.error('영수증 사진 업로드 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-const getAllPhotos = async () => {
+const getReceiptPhotos = async (paymentId) => {
   try {
-    const response = await api.get('/photos');
+    const response = await api.get(`/payments/${paymentId}/receipts`); // /api/v1/payments/{paymentId}/receipts
     return response.data;
   } catch (error) {
-    console.error('사진 목록 조회 실패:', error.response ? error.response.data : error.message);
+    console.error('영수증 사진 조회 실패:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-// --- 회원 관련 API 호출 (최근 추가된 `addMember`, `getAllMembers`) ---
 
-const addMember = async (memberData) => {
-  try {
-    const response = await api.post('/members', memberData);
-    return response.data;
-  } catch (error) {
-    console.error('회원 추가 실패:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-};
+// --- 기타 API 함수 (기존 `addUser`, `getAllUsers` 등은 현재 새로운 엔티티에 맞춰 재정의가 필요하나, 이전 코드 유지 차원) ---
+// Note: `addUser`, `getAllUsers`는 이제 `UsrGroup`이나 `UsrGroupMember`와 혼동될 수 있으므로,
+// 새 엔티티 구조에서는 직접 사용하지 않을 것을 권장합니다.
 
-const getAllMembers = async () => {
-  try {
-    const response = await api.get('/members');
-    return response.data;
-  } catch (error) {
-    console.error('회원 목록 조회 실패:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-};
+const addUser = async (userName) => { /* ... */ }; // 이 함수는 제거하거나 Usr (앱 사용자) 관련 API로 변경하는 것이 좋음
+const getAllUsers = async () => { /* ... */ }; // 이 함수도 제거하거나 Usr (앱 사용자) 관련 API로 변경하는 것이 좋음
 
+// 기존 Transaction, Photo 함수는 이제 Payment 및 ReceiptPhoto와 겹치므로 제거하거나 Payment 관련 함수로 통합하는 것이 좋음
+const addTransaction = async (amount, description) => { /* ... */ }; // addPayment로 대체
+const getAllTransactions = async () => { /* ... */ }; // getGroupPayments로 대체
+const uploadPhoto = async (file) => { /* ... */ }; // uploadReceiptPhoto로 대체
+const getAllPhotos = async () => { /* ... */ }; // getReceiptPhotos로 대체
 
 // 모든 API 함수를 export 하여 다른 컴포넌트에서 import하여 사용
 export {
-  addUser,
-  getAllUsers,
-  addTransaction,
-  getAllTransactions,
-  uploadPhoto,
-  getAllPhotos,
-  addMember,
-  getAllMembers
+  createGroup,
+  getAllGroups,
+  getGroupDetails,
+  addMemberToGroup,
+  getGroupMembers,
+  addPayment,
+  getGroupPayments,
+  uploadReceiptPhoto,
+  getReceiptPhotos,
+  // 기존 함수들은 새 구조에 따라 리팩토링 필요 (일단 유지)
+  addUser, // Usr 관련 API로 재정의 필요
+  getAllUsers, // Usr 관련 API로 재정의 필요
+  addTransaction, // addPayment로 대체
+  getAllTransactions, // getGroupPayments로 대체
+  uploadPhoto, // uploadReceiptPhoto로 대체
+  getAllPhotos // getReceiptPhotos로 대체
 };
