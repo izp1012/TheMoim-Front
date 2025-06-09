@@ -1,9 +1,11 @@
 // src/components/payment/SettlementPage.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import '../../App.css';
 import { getGroupPayments } from '../../api/moimApp';
 
-function SettlementPage({ groupId }) {
+function SettlementPage() {
+  const { groupId } = useParams();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

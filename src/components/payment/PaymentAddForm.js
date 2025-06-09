@@ -1,9 +1,11 @@
 // src/components/payment/PaymentAddForm.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import '../../App.css';
 import { addPayment, getGroupMembers } from '../../api/moimApp';
 
-function PaymentAddForm({ groupId }) {
+function PaymentAddForm() {
+  const { groupId } = useParams();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [paymentType, setPaymentType] = useState('EXPENSE'); // 'INCOME', 'EXPENSE'

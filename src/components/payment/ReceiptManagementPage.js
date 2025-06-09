@@ -1,9 +1,11 @@
 // src/components/payment/ReceiptManagementPage.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import '../../App.css';
 import { getGroupPayments, uploadReceiptPhoto, getReceiptPhotos } from '../../api/moimApp';
 
-function ReceiptManagementPage({ groupId }) {
+function ReceiptManagementPage() {
+  const { groupId } = useParams();
   const [payments, setPayments] = useState([]);
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [receipts, setReceipts] = useState([]);

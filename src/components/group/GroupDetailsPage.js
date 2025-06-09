@@ -1,16 +1,20 @@
-// src/components/group/GroupDetailsPage.js
+// src/components/group/GroupDetailsPage.js (수정)
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom'; // useParams 임포트
 import '../../App.css';
 import { getGroupDetails, getGroupMembers, addMemberToGroup } from '../../api/moimApp';
-import MemberAddForm from '../member/MemberAddForm'; // 기존 MemberAddForm 재사용
-import MemberListPage from '../member/MemberListPage'; // 기존 MemberListPage 재사용
+import MemberAddForm from '../member/MemberAddForm';
+import MemberListPage from '../member/MemberListPage';
 
-function GroupDetailsPage({ groupId, onBackToList, onNavigateToPaymentTab }) {
+function GroupDetailsPage() { // groupId, onBackToList, onNavigateToPaymentTab 프롭스 제거
+  const { groupId } = useParams(); // URL에서 groupId 가져오기
+  const navigate = useNavigate();
+
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeSubTab, setActiveSubTab] = useState('membersList'); // 'membersList' | 'addMember'
+  const [activeSubTab, setActiveSubTab] = useState('membersList');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,15 +33,17 @@ function GroupDetailsPage({ groupId, onBackToList, onNavigateToPaymentTab }) {
         setLoading(false);
       }
     };
-    fetchData();
+    if (groupId) { // groupId가 유효할 때만 fetch
+      fetchData();
+    }
   }, [groupId]); // groupId가 변경될 때마다 다시 불러옴
 
   const handleAddMemberToGroup = async (memberData) => {
     try {
-      const newGroupMember = await addMemberToGroup(groupId, memberData); // API 호출
-      setMembers([...members, newGroupMember]); // UsrGroupMember 객체가 추가됨
+      const newGroupMember = await addMemberToGroup(groupId, memberData);
+      setMembers([...members, newGroupMember]);
       alert(`${newGroupMember.name || memberData.name} 회원이 그룹에 추가되었습니다!`);
-      setActiveSubTab('membersList'); // 추가 후 목록으로 이동
+      setActiveSubTab('membersList');
     } catch (err) {
       alert(`회원 추가 실패: ${err.message || '알 수 없는 오류'}`);
     }
@@ -50,7 +56,7 @@ function GroupDetailsPage({ groupId, onBackToList, onNavigateToPaymentTab }) {
   return (
     <div className="group-details-page">
       <div className="details-header">
-        <button onClick={onBackToList} className="back-button">← 그룹 목록</button>
+        <button onClick={() => navigate('/groups')} className="back-button">← 그룹 목록</button>
         <h2>{group.groupName}</h2>
       </div>
 
@@ -73,12 +79,12 @@ function GroupDetailsPage({ groupId, onBackToList, onNavigateToPaymentTab }) {
         {activeSubTab === 'membersList' && <MemberListPage members={members} />}
         {activeSubTab === 'addMember' && <MemberAddForm onAddMember={handleAddMemberToGroup} />}
 
-        {/* 모임비 관리 탭으로 바로 이동할 수 있는 버튼들 */}
         <div className="quick-links">
           <h3>모임비 관리 바로가기</h3>
-          <button className="button-primary-small" onClick={() => onNavigateToPaymentTab('add')}>금액 추가</button>
-          <button className="button-primary-small" onClick={() => onNavigateToPaymentTab('settlement')}>비용 정산</button>
-          <button className="button-primary-small" onClick={() => onNavigateToPaymentTab('receipts')}>영수증 처리</button>
+          {/* 라우트로 직접 이동하도록 변경 */}
+          <button className="button-primary-small" onClick={() => navigate(`/groups/${groupId}/payments/add`)}>금액 추가</button>
+          <button className="button-primary-small" onClick={() => navigate(`/groups/${groupId}/payments/settlement`)}>비용 정산</button>
+          <button className="button-primary-small" onClick={() => navigate(`/groups/${groupId}/payments/receipts`)}>영수증 처리</button>
         </div>
       </div>
     </div>
