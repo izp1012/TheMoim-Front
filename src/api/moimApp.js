@@ -1,7 +1,8 @@
 // src/api/moimApp.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1'; // 기본 URL 변경
+// API 기본 URL 설정
+const API_BASE_URL = 'http://localhost:8080/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -47,7 +48,7 @@ api.interceptors.response.use(
 // --- 2. USR_GROUP (모임/단체) 관련 API ---
 const createGroup = async (groupData) => {
   try {
-    const response = await api.post('/groups', groupData); // /api/v1/groups
+    const response = await api.post('/groups', groupData); // /api/groups
     return response.data;
   } catch (error) {
     console.error('그룹 생성 실패:', error.response ? error.response.data : error.message);
@@ -57,7 +58,7 @@ const createGroup = async (groupData) => {
 
 const getAllGroups = async (usrId) => { // 특정 총무의 그룹 목록을 가져올 수 있도록 usrId를 인자로 받음 (옵션)
   try {
-    const response = await api.get('/groups', { params: { usrId } }); // /api/v1/groups?usrId=...
+    const response = await api.get('/groups', { params: { usrId } }); // /api/groups?usrId=...
     return response.data;
   } catch (error) {
     console.error('그룹 목록 조회 실패:', error.response ? error.response.data : error.message);
@@ -67,7 +68,7 @@ const getAllGroups = async (usrId) => { // 특정 총무의 그룹 목록을 가
 
 const getGroupDetails = async (groupId) => {
   try {
-    const response = await api.get(`/groups/${groupId}`); // /api/v1/groups/{groupId}
+    const response = await api.get(`/groups/${groupId}`); // /api/groups/{groupId}
     return response.data;
   } catch (error) {
     console.error('그룹 상세 정보 조회 실패:', error.response ? error.response.data : error.message);
@@ -81,7 +82,7 @@ const getDefaultGroup = async (usrId) => {
     try {
       // 백엔드에서 usrId를 기반으로 기본 그룹을 조회하는 로직 필요
       // 여기서는 일단 모든 그룹 중 첫 번째 그룹을 기본 그룹으로 반환하는 것으로 가정
-      const response = await api.get('/groups/default', { params: { usrId } }); // 예시: /api/v1/groups/default?usrId=...
+      const response = await api.get('/groups/default', { params: { usrId } }); // 예시: /api/groups/default?usrId=...
       return response.data;
     } catch (error) {
       // 기본 그룹이 없을 경우 404 Not Found 등의 에러가 발생할 수 있음
@@ -98,7 +99,7 @@ const getDefaultGroup = async (usrId) => {
 const addMemberToGroup = async (groupId, memberData) => { // memberData는 { name, contactInfo, role, defaultFee, etc. }
   try {
     // 백엔드에서 Member를 먼저 생성하거나 조회하고, UsrGroupMember를 연결
-    const response = await api.post(`/groups/${groupId}/members`, memberData); // /api/v1/groups/{groupId}/members
+    const response = await api.post(`/groups/${groupId}/members`, memberData); // /api/groups/{groupId}/members
     return response.data; // UsrGroupMember 객체 반환 예상
   } catch (error) {
     console.error('그룹 회원 추가 실패:', error.response ? error.response.data : error.message);
@@ -108,7 +109,7 @@ const addMemberToGroup = async (groupId, memberData) => { // memberData는 { nam
 
 const getGroupMembers = async (groupId) => {
   try {
-    const response = await api.get(`/groups/${groupId}/members`); // /api/v1/groups/{groupId}/members
+    const response = await api.get(`/groups/${groupId}/members`); // /api/groups/{groupId}/members
     return response.data; // UsrGroupMember 객체 목록 반환 예상
   } catch (error) {
     console.error('그룹 회원 목록 조회 실패:', error.response ? error.response.data : error.message);
@@ -120,7 +121,7 @@ const getGroupMembers = async (groupId) => {
 // --- 4. PAYMENT (모임비/결제) 관련 API ---
 const addPayment = async (groupId, paymentData) => { // paymentData는 { amount, type, description, payerMemberId, paymentDate }
   try {
-    const response = await api.post(`/groups/${groupId}/payments`, paymentData); // /api/v1/groups/{groupId}/payments
+    const response = await api.post(`/groups/${groupId}/payments`, paymentData); // /api/groups/{groupId}/payments
     return response.data;
   } catch (error) {
     console.error('결제/모임비 추가 실패:', error.response ? error.response.data : error.message);
@@ -130,7 +131,7 @@ const addPayment = async (groupId, paymentData) => { // paymentData는 { amount,
 
 const getGroupPayments = async (groupId) => {
   try {
-    const response = await api.get(`/groups/${groupId}/payments`); // /api/v1/groups/{groupId}/payments
+    const response = await api.get(`/groups/${groupId}/payments`); // /api/groups/{groupId}/payments
     return response.data;
   } catch (error) {
     console.error('결제/모임비 목록 조회 실패:', error.response ? error.response.data : error.message);
@@ -145,7 +146,7 @@ const uploadReceiptPhoto = async (paymentId, file) => {
     formData.append('file', file);
     // 누가 업로드했는지 정보도 추가하려면 formData.append('uploaderId', currentUsrId);
     
-    const response = await api.post(`/payments/${paymentId}/receipts`, formData, { // /api/v1/payments/{paymentId}/receipts
+    const response = await api.post(`/payments/${paymentId}/receipts`, formData, { // /api/payments/{paymentId}/receipts
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -159,7 +160,7 @@ const uploadReceiptPhoto = async (paymentId, file) => {
 
 const getReceiptPhotos = async (paymentId) => {
   try {
-    const response = await api.get(`/payments/${paymentId}/receipts`); // /api/v1/payments/{paymentId}/receipts
+    const response = await api.get(`/payments/${paymentId}/receipts`); // /api/payments/{paymentId}/receipts
     return response.data;
   } catch (error) {
     console.error('영수증 사진 조회 실패:', error.response ? error.response.data : error.message);
