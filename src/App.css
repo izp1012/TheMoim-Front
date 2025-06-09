@@ -1,0 +1,484 @@
+/* App.css */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: #f4f7f6;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* 상단 정렬 */
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.app-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 30px 40px;
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.app-header h1 {
+  color: #2c3e50;
+  font-size: 2.2em;
+  margin: 0;
+  font-weight: 700;
+}
+
+.content-section {
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #e0e0e0;
+}
+
+.content-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.form-card {
+  background-color: #fcfcfc;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.form-card h2 {
+  color: #34495e;
+  font-size: 1.6em;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #5cb85c;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.input-field {
+  width: calc(100% - 22px); /* Padding 고려 */
+  padding: 12px 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1em;
+  transition: all 0.3s ease;
+  box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+}
+
+.input-field:focus {
+  border-color: #5cb85c;
+  box-shadow: 0 0 0 0.2rem rgba(92, 184, 92, 0.25);
+  outline: none;
+}
+
+.submit-button {
+  background-color: #5cb85c;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%;
+}
+
+.submit-button:hover {
+  background-color: #4cae4c;
+  transform: translateY(-2px);
+}
+
+.submit-button:active {
+  background-color: #449d44;
+  transform: translateY(0);
+}
+
+.file-input {
+  display: none; /* 기본 파일 인풋 숨기기 */
+}
+
+.file-input-label {
+  display: block;
+  background-color: #6c757d;
+  color: white;
+  padding: 12px 25px;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1.1em;
+  margin-top: 10px;
+}
+
+.file-input-label:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+}
+
+.data-display {
+  background-color: #fcfcfc;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.data-display h2 {
+  color: #34495e;
+  font-size: 1.6em;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #007bff;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.data-display ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.data-display ul li {
+  background-color: #f8f9fa;
+  border: 1px solid #e2e6ea;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95em;
+  color: #555;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.uploaded-photo {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+p {
+  color: #777;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+/* ----------- Overall Layout & Mobile Simulation ----------- */
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f0f2f5; /* 밝은 배경 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .app-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px; /* 모바일 앱 너비 시뮬레이션 */
+    height: 100vh; /* 전체 높이 사용 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 스크롤바 처리 */
+  }
+  
+  .app-header-with-tabs {
+    background-color: #4a90e2; /* KT 앱과 유사한 파란색 */
+    padding-top: 15px; /* 상단 여백 */
+    color: white;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+  
+  .app-header-with-tabs h1 {
+    font-size: 1.8em;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+  }
+  
+  .tab-container {
+    display: flex;
+    justify-content: space-around;
+    background-color: #3a7bd2; /* 탭 배경색 */
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .tab-button {
+    flex-grow: 1;
+    padding: 15px 10px;
+    border: none;
+    background-color: transparent;
+    color: #c9e0ff; /* 비활성 탭 색상 */
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+  
+  .tab-button.active {
+    background-color: #ffffff; /* 활성 탭 배경 */
+    color: #4a90e2; /* 활성 탭 텍스트 색상 */
+    font-weight: 700;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  
+  .app-main-content {
+    flex-grow: 1; /* 남은 공간 차지 */
+    padding: 20px;
+    overflow-y: auto; /* 내용이 많을 때 스크롤 */
+    background-color: #f9fbfd;
+  }
+  
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+  }
+  
+  .nav-button {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: #777;
+    font-size: 0.8em;
+    cursor: pointer;
+    padding: 5px 0;
+  }
+  
+  .nav-button.active {
+    color: #4a90e2;
+  }
+  
+  .nav-button i {
+    font-size: 1.5em;
+    margin-bottom: 3px;
+    /* 아이콘 폰트를 사용하는 경우 */
+  }
+  
+  /* ----------- Forms & Inputs ----------- */
+  .member-form-container {
+    padding: 0px 0; /* App-main-content에서 이미 패딩 있음 */
+  }
+  
+  .form-buttons-top {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .button-secondary {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .button-secondary:hover {
+    background-color: #dee2e6;
+  }
+  
+  .member-add-form {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .form-label .small-text {
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+  }
+  
+  .input-field.full-width,
+  .select-field.full-width {
+    width: calc(100% - 24px); /* 패딩 고려 */
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+  }
+  
+  .input-field.full-width:focus,
+  .select-field.full-width:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+    outline: none;
+  }
+  
+  .submit-button-large {
+    background-color: #4a90e2;
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 100%;
+    margin-top: 20px;
+    font-weight: 600;
+  }
+  
+  .submit-button-large:hover {
+    background-color: #357ac8;
+    transform: translateY(-2px);
+  }
+  
+  .submit-button-large:active {
+    background-color: #2a6bb5;
+    transform: translateY(0);
+  }
+  
+  
+  /* ----------- Member List & Empty State ----------- */
+  .member-list-container {
+    padding: 0px 0; /* App-main-content에서 이미 패딩 있음 */
+  }
+  
+  .empty-state-card {
+    background-color: #e8f0fe;
+    border: 1px dashed #a0c2f7;
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    color: #3f51b5;
+    margin-top: 30px;
+  }
+  
+  .empty-state-card p {
+    margin: 10px 0;
+    font-size: 1.1em;
+  }
+  
+  .empty-state-card .submit-button-large {
+      background-color: #5cb85c; /* 초록색 버튼 */
+      width: auto;
+      padding: 12px 25px;
+      display: inline-block;
+      margin-top: 20px;
+  }
+  
+  .empty-state-card .submit-button-large:hover {
+      background-color: #4cae4c;
+  }
+  
+  
+  .member-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .member-list-item {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .member-info {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .member-name {
+    margin-right: 8px;
+  }
+  
+  .member-type {
+    font-size: 0.9em;
+    color: #666;
+  }
+  
+  .member-contact {
+    font-size: 0.95em;
+    color: #555;
+    margin-left: 10px;
+  }
+  
+  .member-details {
+    font-size: 0.9em;
+    color: #777;
+    display: flex;
+    gap: 15px;
+  }
+  
+  /* Icons (Placeholder) */
+  .icon-home::before { content: '🏠'; }
+  .icon-group::before { content: '👥'; }
+  .icon-settings::before { content: '⚙️'; }
+  
+  /* Loading & Error messages */
+  .loading-message, .error-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1em;
+    color: #666;
+  }
+  .error-message {
+    color: #dc3545;
+  }
