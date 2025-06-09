@@ -5,7 +5,7 @@ import { signup, kakaoLogin, googleLogin } from '../../api/auth';
 import '../../styles/App.css'; // 공통 스타일
 
 function SignUpPage() {
-  const [username, setUsername] = useState('');
+  const [usrname, setUsrname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,7 +14,7 @@ function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!username || !password || !confirmPassword) {
+    if (!usrname || !password || !confirmPassword) {
       setError('모든 필드를 입력해주세요.');
       return;
     }
@@ -29,7 +29,7 @@ function SignUpPage() {
 
     try {
       // API 호출
-      await signup(username, password);
+      await signup(usrname, password);
       alert('회원가입이 성공적으로 완료되었습니다! 로그인 해주세요.');
       navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
     } catch (err) {
@@ -48,8 +48,8 @@ function SignUpPage() {
             <input
               type="text"
               placeholder="사용할 아이디를 입력해주세요"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={usrname}
+              onChange={(e) => setUsrname(e.target.value)}
               className="input-field full-width"
               required
             />

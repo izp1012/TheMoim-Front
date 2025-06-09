@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // 백엔드 인증 관련 API의 기본 URL 설정
-const AUTH_API_BASE_URL = process.env.REACT_APP_AUTH_API_BASE_URL || 'http://localhost:8080/api/v1/auth';
+const AUTH_API_BASE_URL = process.env.REACT_APP_AUTH_API_BASE_URL || 'http://localhost:8080/api/';
 
 const authApi = axios.create({
   baseURL: AUTH_API_BASE_URL,
@@ -12,12 +12,27 @@ const authApi = axios.create({
   timeout: 5000,
 });
 
+authApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('jwt-token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    // 요청 에러 처리
+    return Promise.reject(error);
+  }
+);
+
 // 일반 로그인 API
-const login = async (username, password) => {
+const login = async (usrname, password) => {
   try {
-    const response = await authApi.post('/login', { username, password });
+    const response = await authApi.post('/login', { usrname, password });
     // 서버에서 반환하는 토큰이나 사용자 정보를 저장
-    // 예: localStorage.setItem('token', response.data.token);
+    console.log(response.data.data.jwtToken);
+    localStorage.setItem('jwt-token', response.data.data.jwtToken);
     // 예: localStorage.setItem('usrId', response.data.usrId);
     return response.data; // 로그인 성공 시 사용자 정보 등 반환
   } catch (error) {
@@ -27,9 +42,9 @@ const login = async (username, password) => {
 };
 
 // 일반 회원가입 API
-const signup = async (username, password) => {
+const signup = async (usrname, password) => {
   try {
-    const response = await authApi.post('/signup', { username, password });
+    const response = await authApi.post('/signup', { usrname, password });
     return response.data; // 회원가입 성공 시 정보 반환
   } catch (error) {
     console.error('회원가입 실패:', error.response ? error.response.data : error.message);

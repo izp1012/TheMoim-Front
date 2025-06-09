@@ -5,7 +5,7 @@ import { login, kakaoLogin, googleLogin } from '../../api/auth'; // 소셜 로�
 import '../../App.css'; // 공통 스타일
 
 function LoginPage({ onLoginSuccess }) {
-  const [username, setUsername] = useState('');
+  const [usrname, setUsrname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,14 +13,14 @@ function LoginPage({ onLoginSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!username || !password) {
+    if (!usrname || !password) {
       setError('아이디와 비밀번호를 모두 입력해주세요.');
       return;
     }
-    try {
-      const userData = await login(username, password);
-      alert(`환영합니다, ${userData.username}님!`);
-      onLoginSuccess(userData.usrId);
+    try {     
+      const usrData = await login(usrname, password);
+      alert(`환영합니다, ${usrData.data.usrname}님!`);
+      onLoginSuccess(usrData.data.usrname);
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -38,8 +38,8 @@ function LoginPage({ onLoginSuccess }) {
             <input
               type="text"
               placeholder="아이디를 입력해주세요"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={usrname}
+              onChange={(e) => setUsrname(e.target.value)}
               className="input-field full-width"
               required
             />
