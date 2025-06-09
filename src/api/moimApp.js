@@ -75,6 +75,23 @@ const getGroupDetails = async (groupId) => {
   }
 };
 
+// 특정 사용자의 메인/기본 그룹 정보를 가져오는 API (가정)
+// 백엔드에서 사용자별로 '대표 그룹'을 설정하거나, 가장 최근에 활동한 그룹 등을 반환하도록 구현 필요
+const getDefaultGroup = async (usrId) => {
+    try {
+      // 백엔드에서 usrId를 기반으로 기본 그룹을 조회하는 로직 필요
+      // 여기서는 일단 모든 그룹 중 첫 번째 그룹을 기본 그룹으로 반환하는 것으로 가정
+      const response = await api.get('/groups/default', { params: { usrId } }); // 예시: /api/v1/groups/default?usrId=...
+      return response.data;
+    } catch (error) {
+      // 기본 그룹이 없을 경우 404 Not Found 등의 에러가 발생할 수 있음
+      if (error.response && error.response.status === 404) {
+        return null; // 그룹이 없는 경우 null 반환
+      }
+      console.error('기본 그룹 조회 실패:', error.response ? error.response.data : error.message);
+      throw error;
+    }
+  };
 
 // --- 3. MEMBER (실제 사람) 및 USR_GROUP_MEMBER (그룹 내 회원) 관련 API ---
 // 회원 추가 (특정 그룹에 회원 추가) - USR_GROUP_MEMBER 생성
@@ -169,6 +186,7 @@ export {
   createGroup,
   getAllGroups,
   getGroupDetails,
+  getDefaultGroup,
   addMemberToGroup,
   getGroupMembers,
   addPayment,
