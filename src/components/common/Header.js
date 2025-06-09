@@ -1,89 +1,111 @@
 // src/components/common/Header.js (수정)
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../App.css';
 
-function Header({
-  activeTopTab,
-  onTopTabChange,
-  activeGroupSubTab,
-  onGroupSubTabChange,
-  activePaymentSubTab,
-  onPaymentSubTabChange,
-  selectedGroupId
-}) {
+function Header({ selectedGroupId, onLogout }) { // onLogout 프롭스 추가
+  const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState(null); // 'group' | 'payment' | null
+
+  // 드롭다운 외부 클릭 감지용
+  const groupMenuRef = useRef(null);
+  const paymentMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        (groupMenuRef.current && !groupMenuRef.current.contains(event.target)) &&
+        (paymentMenuRef.current && !paymentMenuRef.current.contains(event.target))
+      ) {
+        setActiveMenu(null); // 메뉴 외부 클릭 시 닫기
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleMenuToggle = (menuName) => {
+    setActiveMenu(activeMenu === menuName ? null : menuName); // 토글
+  };
+
+  const handleMenuItemClick = (path) => {
+    navigate(path);
+    setActiveMenu(null); // 메뉴 항목 클릭 후 메뉴 닫기
+  };
+
   return (
-    <header className="app-header-with-tabs">
-      <div className="top-tab-container">
-        <button
-          className={`top-tab-button ${activeTopTab === 'group' ? 'active' : ''}`}
-          onClick={() => onTopTabChange('group')}
-        >
-          그룹 관리
-        </button>
-        <button
-          className={`top-tab-button ${activeTopTab === 'payment' ? 'active' : ''}`}
-          onClick={() => onTopTabChange('payment')}
-        >
-          모임비 관리
-        </button>
+    <header className="app-header-dropdown">
+      <div className="header-top-row">
+        <h1 className="app-title" onClick={() => navigate('/')}>모임통장</h1>
+        <div className="header-actions">
+          <button className="logout-button" onClick={onLogout}>로그아웃</button>
+        </div>
       </div>
 
-      {activeTopTab === 'group' && (
-        <div className="sub-tab-container">
+      <nav className="main-nav-dropdown">
+        <div className="nav-item-wrapper" ref={groupMenuRef}>
           <button
-            className={`sub-tab-button ${activeGroupSubTab === 'list' ? 'active' : ''}`}
-            onClick={() => onGroupSubTabChange('list')}
+            className={`nav-button ${activeMenu === 'group' ? 'active' : ''}`}
+            onClick={() => handleMenuToggle('group')}
+            // onMouseEnter={() => setActiveMenu('group')} // 마우스 오버 시 열기 (선택 사항)
+            // onMouseLeave={() => setActiveMenu(null)} // 마우스 리브 시 닫기 (선택 사항)
           >
-            그룹 목록
+            그룹 관리
           </button>
-          <button
-            className={`sub-tab-button ${activeGroupSubTab === 'add' ? 'active' : ''}`}
-            onClick={() => onGroupSubTabChange('add')}
-          >
-            그룹 추가
-          </button>
-          {selectedGroupId && ( // 그룹이 선택되어 있을 때만 상세 및 회원 관련 탭 표시
-            <>
-              <button
-                className={`sub-tab-button ${activeGroupSubTab === 'details' ? 'active' : ''}`}
-                onClick={() => onGroupSubTabChange('details')}
-              >
-                그룹 상세
+          {activeMenu === 'group' && (
+            <div className="dropdown-menu">
+              <button onClick={() => handleMenuItemClick('/groups')} className="dropdown-item">
+                그룹 목록
               </button>
-              {/* 그룹 상세 페이지 내에서 회원 목록/추가로 이동하도록 구성 */}
-              {/* <button className={`sub-tab-button ${activeGroupSubTab === 'members' ? 'active' : ''}`} onClick={() => onGroupSubTabChange('members')}>회원 목록</button>
-              <button className={`sub-tab-button ${activeGroupSubTab === 'addMember' ? 'active' : ''}`} onClick={() => onGroupSubTabChange('addMember')}>회원 추가</button> */}
-            </>
+              <button onClick={() => handleMenuItemClick('/groups/add')} className="dropdown-item">
+                그룹 추가
+              </button>
+              {selectedGroupId && (
+                <>
+                  <button onClick={() => handleMenuItemClick(`/groups/${selectedGroupId}/members`)} className="dropdown-item">
+                    그룹 회원 목록
+                  </button>
+                  <button onClick={() => handleMenuItemClick(`/groups/${selectedGroupId}/members/add`)} className="dropdown-item">
+                    그룹에 회원 추가
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
 
-      {activeTopTab === 'payment' && selectedGroupId && ( // 그룹이 선택되어 있을 때만 모임비 하위 메뉴 표시
-        <div className="sub-tab-container">
+        <div className="nav-item-wrapper" ref={paymentMenuRef}>
           <button
-            className={`sub-tab-button ${activePaymentSubTab === 'add' ? 'active' : ''}`}
-            onClick={() => onPaymentSubTabChange('add')}
+            className={`nav-button ${activeMenu === 'payment' ? 'active' : ''}`}
+            onClick={() => handleMenuToggle('payment')}
+            // onMouseEnter={() => setActiveMenu('payment')}
+            // onMouseLeave={() => setActiveMenu(null)}
           >
-            금액 추가
+            모임비 관리
           </button>
-          <button
-            className={`sub-tab-button ${activePaymentSubTab === 'settlement' ? 'active' : ''}`}
-            onClick={() => onPaymentSubTabChange('settlement')}
-          >
-            비용 정산
-          </button>
-          <button
-            className={`sub-tab-button ${activePaymentSubTab === 'receipts' ? 'active' : ''}`}
-            onClick={() => onPaymentSubTabChange('receipts')}
-          >
-            영수증 처리
-          </button>
+          {activeMenu === 'payment' && (
+            <div className="dropdown-menu">
+              {!selectedGroupId ? (
+                <span className="dropdown-message">그룹을 먼저 선택해주세요</span>
+              ) : (
+                <>
+                  <button onClick={() => handleMenuItemClick(`/groups/${selectedGroupId}/payments/add`)} className="dropdown-item">
+                    금액 추가
+                  </button>
+                  <button onClick={() => handleMenuItemClick(`/groups/${selectedGroupId}/payments/settlement`)} className="dropdown-item">
+                    비용 정산
+                  </button>
+                  <button onClick={() => handleMenuItemClick(`/groups/${selectedGroupId}/payments/receipts`)} className="dropdown-item">
+                    영수증 처리
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
-      )}
-       {/* 선택된 그룹이 없을 때 모임비 관리 탭 활성화 시 메시지 */}
-       {activeTopTab === 'payment' && !selectedGroupId && (
-         <div className="sub-tab-message">그룹을 먼저 선택해주세요.</div>
-       )}
+      </nav>
     </header>
   );
 }
