@@ -5,7 +5,8 @@ import { signup, kakaoLogin, googleLogin } from '../../api/auth';
 import '../../styles/App.css'; // 공통 스타일
 
 function SignUpPage() {
-  const [usrname, setUsrname] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,7 +15,7 @@ function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!usrname || !password || !confirmPassword) {
+    if (!username || !password || !email || !confirmPassword) {
       setError('모든 필드를 입력해주세요.');
       return;
     }
@@ -29,7 +30,7 @@ function SignUpPage() {
 
     try {
       // API 호출
-      await signup(usrname, password);
+      await signup(username, email, password);
       alert('회원가입이 성공적으로 완료되었습니다! 로그인 해주세요.');
       navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
     } catch (err) {
@@ -48,12 +49,25 @@ function SignUpPage() {
             <input
               type="text"
               placeholder="사용할 아이디를 입력해주세요"
-              value={usrname}
-              onChange={(e) => setUsrname(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="input-field full-width"
               required
             />
           </label>
+
+          <label className="form-label">
+            E-mail
+            <input
+              type="text"
+              placeholder="E-mail 을 입력해주세요"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-field full-width"
+              required
+            />
+          </label>
+
           <label className="form-label">
             비밀번호
             <input

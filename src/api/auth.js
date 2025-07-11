@@ -42,9 +42,9 @@ const login = async (usrname, password) => {
 };
 
 // 일반 회원가입 API
-const signup = async (usrname, password) => {
+const signup = async (usrname, email, password) => {
   try {
-    const response = await authApi.post('/signup', { usrname, password });
+    const response = await authApi.post('/signup', { usrname, email, password });
     return response.data; // 회원가입 성공 시 정보 반환
   } catch (error) {
     console.error('회원가입 실패:', error.response ? error.response.data : error.message);
