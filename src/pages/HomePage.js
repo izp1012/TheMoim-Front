@@ -51,7 +51,7 @@ function HomePage({ currentUsrId, onSelectGroup }) {
     } catch (err) {
       alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
       console.error("홈에서 그룹 생성 중 오류 발생:", err);
-    }
+    } 
   };
 
   const handleManageGroupClick = () => {

@@ -1,6 +1,6 @@
 // src/MainApp.js (수정)
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import './App.css';
 import Header from './components/common/Header';
 import BottomNav from './components/common/BottomNav';
@@ -13,7 +13,8 @@ import MemberAddForm from './components/member/MemberAddForm'; // 그룹에 회�
 import PaymentAddForm from './components/payment/PaymentAddForm';
 import SettlementPage from './components/payment/SettlementPage';
 import ReceiptManagementPage from './components/payment/ReceiptManagementPage';
-
+import KftcConnectPage from './pages/kftc/KftcConnectPage'; 
+import KftcCallbackPage from './pages/kftc/KftcCallbackPage'; 
 // MainApp에서는 이제 더 이상 복잡한 탭 상태를 직접 관리하지 않습니다.
 // 라우터가 페이지를 결정하며, selectedGroupId는 HomePage 또는 GroupListPage에서 설정되어
 // props로 전달되거나 Context API로 관리됩니다.
@@ -23,6 +24,12 @@ function MainApp({ currentUsrId, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation(); // 현재 경로 확인
   const [selectedGroupId, setSelectedGroupId] = useState(null); // 현재 선택된 그룹 ID
+  const [connectedAccountInfo, setConnectedAccountInfo] = useState(null);
+
+  // 계좌 연결 성공 시 호출될 함수
+  const onBankApiConnected = (accountInfo) => {
+    setConnectedAccountInfo(accountInfo);
+  };
 
   // URL 파라미터에서 groupId를 추출하여 selectedGroupId에 설정
   useEffect(() => {
@@ -69,8 +76,24 @@ function MainApp({ currentUsrId, onLogout }) {
 
   return (
     <div className="app-container">
-      <Header selectedGroupId={selectedGroupId} onLogout={onLogout} /> {/* selectedGroupId 전달 */}
+      <Header 
+        selectedGroupId={selectedGroupId} 
+        onLogout={onLogout} 
+        connectedAccountInfo={connectedAccountInfo}
+      /> {/* selectedGroupId 전달 */}
       <main className="app-main-content">
+      {connectedAccountInfo ? (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+            <strong className="font-bold">은행 계좌 연결됨: </strong>
+            <span className="block sm:inline">{connectedAccountInfo.bankName} - {connectedAccountInfo.accountNumber}</span>
+          </div>
+        ) : (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
+            <strong className="font-bold">알림: </strong>
+            <span className="block sm:inline">아직 연결된 은행 계좌가 없습니다. 
+              <Link to="/bank-connect" className="text-blue-700 hover:underline">지금 연결하기</Link></span>
+          </div>
+        )}
         <Routes>
           <Route path="/" element={<HomePage currentUsrId={currentUsrId} onSelectGroup={handleSelectGroupFromList} />} />
 
@@ -79,12 +102,10 @@ function MainApp({ currentUsrId, onLogout }) {
           {/* 그룹 추가 페이지 - 여기서 handleCreateGroup 함수를 onCreateGroup 프롭스로 전달 */}
           <Route path="/groups/add" element={<GroupAddForm onCreateGroup={handleCreateGroup} onCancel={() => navigate('/groups')} />} />
           
-          <Route path="/groups/add" element={<GroupAddForm />} />
           {/* 그룹 상세 페이지 (하위 기능 포함) */}
           <Route path="/groups/:groupId/details" element={<GroupDetailsPage />} />
           <Route path="/groups/:groupId/members" element={<MemberListPage />} />
           <Route path="/groups/:groupId/members/add" element={<MemberAddForm />} />
-
 
           {/* 모임비 관리 라우트 (selectedGroupId가 필요하므로 라우트 파라미터로 명시) */}
           {/* MainApp의 selectedGroupId state를 넘겨주기 위해 element props를 사용하는 대신 render props나 wrapper 컴포넌트를 고려할 수 있으나,
@@ -92,6 +113,23 @@ function MainApp({ currentUsrId, onLogout }) {
           <Route path="/groups/:groupId/payments/add" element={selectedGroupId ? <PaymentAddForm groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
           <Route path="/groups/:groupId/payments/settlement" element={selectedGroupId ? <SettlementPage groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
           <Route path="/groups/:groupId/payments/receipts" element={selectedGroupId ? <ReceiptManagementPage groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
+
+          {/* 금융결재원 연동 페이지 라우트 */}
+          <Route 
+            path="/bank-connect" 
+            element={
+              <KftcConnectPage 
+                connectedAccountInfo={connectedAccountInfo} 
+                onApiConnected={onBankApiConnected} 
+              />
+            } 
+          />
+
+          {/* 금융결재원 콜백 페이지 라우트 */}
+          <Route 
+            path="/auth/kftc/callback" 
+            element={<KftcCallbackPage onApiConnected={onBankApiConnected} />} 
+          />
 
           {/* Fallback for unmatched routes */}
           <Route path="*" element={<p style={{textAlign: 'center', padding: '20px'}}>페이지를 찾을 수 없습니다.</p>} />
