@@ -1,30 +1,28 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import FinancialApiConnector from '../../components/FinancialApiConnector';
+import { fetchKftcToken } from '../../api/kftc';
 
 function KftcCallbackPage({ onApiConnected }) {
-  // 인증 완료 후 opener 창으로 메시지 전송 및 창 닫기
-  const handleApiConnected = (accountInfo) => {
-    // opener 창이 존재하는지 확인
-    if (window.opener && !window.opener.closed) {
-      // opener 창으로 계좌 정보 전달
-      window.opener.postMessage({
-        type: 'KFTC_AUTH_SUCCESS',
-        accountInfo: accountInfo
-      }, window.location.origin);
-      
-      // 성공 메시지 표시
-      alert('금융결재원 연동이 완료되었습니다!');
-      
-      // 팝업 창 닫기
-      window.close();
-    } else {
-      // opener가 없는 경우 (직접 접근한 경우)
-      if (onApiConnected) {
-        onApiConnected(accountInfo);
-      }
-      alert('금융결재원 연동 및 계좌 정보 조회가 완료되었습니다!');
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const redirect_uri = window.location.origin + '/auth/kftc/callback'; // 실제 등록한 redirect_uri와 일치해야 함
+
+    if (code) {
+      fetchKftcToken({ code, redirect_uri })
+        .then(tokenResp => {
+          // 토큰을 부모나 전역 상태로 전달하거나, 바로 계좌조회 등 후속처리
+          if (onApiConnected) onApiConnected(tokenResp);
+          alert('토큰 발급 성공: ' + tokenResp.accessToken);
+        })
+        .catch(err => {
+          alert('토큰 발급 실패: ' + err.message);
+        });
     }
-  };
+  }, [location, onApiConnected]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">

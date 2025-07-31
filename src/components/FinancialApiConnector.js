@@ -23,6 +23,7 @@ function FinancialApiConnector({ onApiConnected }) {
 
     console.log("location.pathname =", location.pathname);
     if (code) {
+      alert('code = '+code);
       setModalMessage('금융결재원으로부터 인증 코드를 수신했습니다. 토큰 교환을 백엔드에서 처리합니다...');
       setShowModal(true);
       handleTokenExchangeAndFetchAccount(code, REDIRECT_URI);
