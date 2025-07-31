@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import FinancialApiConnector from '../../components/FinancialApiConnector';
-import { fetchKftcToken } from '../../api/kftc';
+import { fetchKftcToken } from './kftc';
 
 function KftcCallbackPage({ onApiConnected }) {
   const location = useLocation();
@@ -9,32 +9,37 @@ function KftcCallbackPage({ onApiConnected }) {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
-    const redirect_uri = window.location.origin + '/auth/kftc/callback'; // 실제 등록한 redirect_uri와 일치해야 함
+    const redirect_uri = window.location.origin + '/auth/kftc/callback';
 
     if (code) {
       fetchKftcToken({ code, redirect_uri })
         .then(tokenResp => {
-          // 토큰을 부모나 전역 상태로 전달하거나, 바로 계좌조회 등 후속처리
-          if (onApiConnected) onApiConnected(tokenResp);
-          alert('토큰 발급 성공: ' + tokenResp.accessToken);
+          // 계좌 정보 조회
+          return fetchAccountInfo(tokenResp.accessToken);
+        })
+        .then(accountInfo => {
+          // 부모 창으로 메시지 전송
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'KFTC_AUTH_SUCCESS',
+              accountInfo: accountInfo
+            }, window.location.origin);
+          }
+          
+          // 팝업 창 닫기
+          window.close();
         })
         .catch(err => {
-          alert('토큰 발급 실패: ' + err.message);
+          alert('인증 실패: ' + err.message);
+          window.close();
         });
     }
-  }, [location, onApiConnected]);
+  }, [location]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
-        금융결재원 연동 처리 중...
-      </h1>
-      <p className="text-gray-600 mb-4">
-        잠시만 기다려 주세요. 금융결재원으로부터 정보를 가져오는 중입니다.
-      </p>
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      
-      <FinancialApiConnector onApiConnected={handleApiConnected} />
+    <div className="loading-container">
+      <h2>인증 처리 중...</h2>
+      <p>잠시만 기다려 주세요.</p>
     </div>
   );
 }

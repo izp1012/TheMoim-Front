@@ -21,7 +21,6 @@ function FinancialApiConnector({ onApiConnected }) {
     const code = params.get('code');
     const state = params.get('state');
 
-    console.log("location.pathname =", location.pathname);
     if (code) {
       alert('code = '+code);
       setModalMessage('금융결재원으로부터 인증 코드를 수신했습니다. 토큰 교환을 백엔드에서 처리합니다...');
@@ -104,6 +103,7 @@ function FinancialApiConnector({ onApiConnected }) {
   // 팝업 창에서 메시지 수신 처리
   useEffect(() => {
     function handleMessage(event) {
+      console.log(event);
       // opener 창으로부터 인증 성공 메시지 수신
       if (
         event.origin === window.location.origin &&
@@ -121,16 +121,6 @@ function FinancialApiConnector({ onApiConnected }) {
         // 성공 메시지 표시
         setModalMessage('금융결재원 연동이 완료되었습니다!');
         setShowModal(true);
-      }
-      
-      // 기존 KFTC_AUTH_CODE 메시지 처리 (필요시)
-      if (
-        event.origin === window.location.origin &&
-        event.data &&
-        event.data.type === 'KFTC_AUTH_CODE'
-      ) {
-        const code = event.data.code;
-        handleTokenExchangeAndFetchAccount(code, REDIRECT_URI);
       }
     }
     
