@@ -8,11 +8,12 @@
  * @returns {Promise<Object>} - 토큰 응답(JSON)
  */
 export async function fetchKftcToken({ code, redirect_uri }) {
-    const response = await fetch('http://localhost:8080/api/kftc/token', {
+    const jwtToken = localStorage.getItem('jwt-token');
+    const response = await fetch('http://localhost:8080/api/kftc/token-exchange', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // 필요시 Authorization 헤더 추가
+        ...(jwtToken && { Authorization: `Bearer ${jwtToken}` }),
       },
       body: JSON.stringify({ code, redirect_uri }),
     });
@@ -21,5 +22,23 @@ export async function fetchKftcToken({ code, redirect_uri }) {
       const error = await response.json();
       throw new Error(error.error || '금융결제원 토큰 발급 실패');
     }
+    return response.json();
+  }
+
+  export async function fetchAccountInfo({ accessToken, userSeqNo }) {
+    const jwtToken = localStorage.getItem('jwt-token');
+    const response = await fetch('http://localhost:8080/api/kftc/account-info', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(jwtToken && { Authorization: `Bearer ${jwtToken}` }),
+      },
+      body: JSON.stringify({ accessToken, userSeqNo }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('계좌 정보 조회 실패');
+    }
+  
     return response.json();
   }
