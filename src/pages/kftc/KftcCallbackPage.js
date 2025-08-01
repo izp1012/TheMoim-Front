@@ -1,117 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { fetchKftcToken } from './kftc';
-import { KFTC_CONFIG } from '../../config/kftc';
-
-// 계좌 정보 조회 함수
-const fetchAccountInfo = async (tokenResponse) => {
-  try {
-    const { accessToken, userSeqNo } = tokenResponse;
-    
-    // 계좌 목록 조회 API 호출
-    const response = await fetch(`${KFTC_CONFIG.API_BASE_URL}/v2.0/account/list`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        bank_tran_id: `T990${Date.now()}`,
-        user_seq_no: userSeqNo || '1100000001',
-        include_cancel_yn: 'Y',
-        sort_order: 'D',
-        tran_dtime: new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.rsp_message || '계좌 정보 조회 실패');
-    }
-
-    const data = await response.json();
-    
-    if (data.res_list && data.res_list.length > 0) {
-      const account = data.res_list[0];
-      
-      // 기본 계좌 정보
-      const accountInfo = {
-        bankName: account.bank_name || '알 수 없는 은행',
-        accountNumber: account.account_num_masked || '****-****-****',
-        ownerName: account.account_holder_name || '알 수 없음',
-        balance: '0',
-        transactions: [],
-        fintechUseNum: account.fintech_use_num
-      };
-
-      // 잔액 조회
-      try {
-        const balanceResponse = await fetch(`${KFTC_CONFIG.API_BASE_URL}/v2.0/account/balance/fin_num`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bank_tran_id: `T991${Date.now()}`,
-            fintech_use_num: account.fintech_use_num,
-            tran_dtime: new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)
-          })
-        });
-
-        if (balanceResponse.ok) {
-          const balanceData = await balanceResponse.json();
-          accountInfo.balance = balanceData.balance_amt || '0';
-        }
-      } catch (balanceError) {
-        console.warn('잔액 조회 실패:', balanceError);
-      }
-
-      // 거래 내역 조회 (최근 7일)
-      try {
-        const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-          .toISOString().slice(0, 10).replace(/-/g, '');
-        const toDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        
-        const transactionResponse = await fetch(`${KFTC_CONFIG.API_BASE_URL}/v2.0/account/transaction_list/fin_num`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bank_tran_id: `T992${Date.now()}`,
-            fintech_use_num: account.fintech_use_num,
-            inquiry_type: 'A',
-            inquiry_base: 'D',
-            from_date: fromDate,
-            to_date: toDate,
-            sort_order: 'D',
-            tran_dtime: new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)
-          })
-        });
-
-        if (transactionResponse.ok) {
-          const transactionData = await transactionResponse.json();
-          accountInfo.transactions = transactionData.res_list || [];
-        }
-      } catch (transactionError) {
-        console.warn('거래 내역 조회 실패:', transactionError);
-      }
-
-      return accountInfo;
-    } else {
-      throw new Error('등록된 계좌가 없습니다.');
-    }
-  } catch (error) {
-    console.error('계좌 정보 조회 오류:', error);
-    throw error;
-  }
-};
+import { fetchKftcToken, fetchAccountInfoViaBackend, fetchTokenAndAccountInfo, fetchAccountInfoDirect } from '../../utils/kftc';
 
 function KftcCallbackPage() {
   const location = useLocation();
   const [status, setStatus] = useState('처리 중...');
+  const [progress, setProgress] = useState(0);
   
   useEffect(() => {
     const processCallback = async () => {
@@ -131,35 +25,16 @@ function KftcCallbackPage() {
           throw new Error('인증 코드가 없습니다.');
         }
 
-        setStatus('토큰 교환 중...');
-        
         const redirect_uri = window.location.origin + '/auth/kftc/callback';
-        console.log('토큰 교환 요청:', { code, redirect_uri });
+        alert(code);
+        // 방법 1: 백엔드를 통한 통합 처리 (권장)
+        await processViaBackendIntegrated(code, redirect_uri);
         
-        // 토큰 교환
-        const tokenResponse = await fetchKftcToken({ code, redirect_uri });
-        console.log('토큰 교환 성공:', tokenResponse);
+        // 방법 2: 백엔드를 통한 단계별 처리
+        // await processViaBackendStepByStep(code, redirect_uri);
         
-        setStatus('계좌 정보 조회 중...');
-        
-        // 계좌 정보 조회
-        const accountInfo = await fetchAccountInfo(tokenResponse);
-        console.log('계좌 정보 조회 성공:', accountInfo);
-        
-        setStatus('완료! 창을 닫는 중...');
-        
-        // 부모 창으로 성공 메시지 전송
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'KFTC_AUTH_SUCCESS',
-            accountInfo: accountInfo
-          }, window.location.origin);
-        }
-        
-        // 잠시 후 팝업 창 닫기
-        setTimeout(() => {
-          window.close();
-        }, 1000);
+        // 방법 3: 프론트엔드에서 직접 처리 (CORS 이슈 가능)
+        // await processDirectly(code, redirect_uri);
         
       } catch (error) {
         console.error('콜백 처리 실패:', error);
@@ -183,13 +58,153 @@ function KftcCallbackPage() {
     processCallback();
   }, [location]);
 
+  // 방법 1: 백엔드 통합 처리
+  const processViaBackendIntegrated = async (code, redirect_uri) => {
+    setStatus('백엔드 통합 처리 중...');
+    setProgress(20);
+    
+    console.log('백엔드 통합 처리 시작:', { code, redirect_uri });
+    
+    // 토큰 교환과 계좌 정보 조회를 한 번에 처리
+    const accountInfo = await fetchTokenAndAccountInfo({ code, redirect_uri });
+    
+    setProgress(80);
+    setStatus('계좌 정보 처리 완료!');
+    console.log('통합 처리 성공:', accountInfo);
+    
+    // 부모 창으로 성공 메시지 전송
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'KFTC_AUTH_SUCCESS',
+        accountInfo: accountInfo
+      }, window.location.origin);
+    }
+    
+    setProgress(100);
+    setStatus('완료! 창을 닫는 중...');
+    
+    setTimeout(() => {
+      window.close();
+    }, 1000);
+  };
+
+  // 방법 2: 백엔드 단계별 처리
+  const processViaBackendStepByStep = async (code, redirect_uri) => {
+    setStatus('토큰 교환 중...');
+    setProgress(20);
+    
+    // 1. 토큰 교환
+    const tokenResponse = await fetchKftcToken({ code, redirect_uri });
+    console.log('토큰 교환 성공:', tokenResponse);
+    
+    setProgress(50);
+    setStatus('계좌 정보 조회 중...');
+    
+    // // 2. 계좌 정보 조회
+    // const accountInfo = await fetchAccountInfoViaBackend({
+    //   accessToken: tokenResponse.accessToken,
+    //   userSeqNo: tokenResponse.userSeqNo
+    // });
+    
+    setProgress(80);
+    setStatus('처리 완료!');
+    // console.log('계좌 정보 조회 성공:', accountInfo);
+    
+    // 부모 창으로 성공 메시지 전송
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'KFTC_AUTH_SUCCESS',
+        // accountInfo: accountInfo
+      }, window.location.origin);
+    }
+    
+    setProgress(100);
+    setStatus('완료! 창을 닫는 중...');
+    
+    setTimeout(() => {
+      window.close();
+    }, 1000);
+  };
+
+  // 방법 3: 프론트엔드 직접 처리
+  const processDirectly = async (code, redirect_uri) => {
+    setStatus('토큰 교환 중...');
+    setProgress(20);
+    
+    // 1. 백엔드를 통해 토큰만 교환
+    const tokenResponse = await fetchKftcToken({ code, redirect_uri });
+    console.log('토큰 교환 성공:', tokenResponse);
+    
+    setProgress(50);
+    setStatus('계좌 정보 조회 중...');
+    
+    // 2. 프론트엔드에서 직접 금융결재원 API 호출
+    const accountInfo = await fetchAccountInfoDirect({
+      accessToken: tokenResponse.accessToken,
+      userSeqNo: tokenResponse.userSeqNo
+    });
+    
+    setProgress(80);
+    setStatus('처리 완료!');
+    console.log('계좌 정보 조회 성공:', accountInfo);
+    
+    // 부모 창으로 성공 메시지 전송
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'KFTC_AUTH_SUCCESS',
+        accountInfo: accountInfo
+      }, window.location.origin);
+    }
+    
+    setProgress(100);
+    setStatus('완료! 창을 닫는 중...');
+    
+    setTimeout(() => {
+      window.close();
+    }, 1000);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">금융결재원 인증 처리</h2>
-          <p className="text-gray-600">{status}</p>
+          {/* 로딩 애니메이션 */}
+          <div className="mb-6">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+            </div>
+          </div>
+          
+          {/* 제목 */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            금융결재원 인증 처리
+          </h2>
+          
+          {/* 상태 메시지 */}
+          <p className="text-gray-600 mb-6 text-lg">{status}</p>
+          
+          {/* 진행률 표시 */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-500">{progress}% 완료</p>
+          
+          {/* 안내 메시지 */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start">
+              <svg className="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <div className="ml-3 text-sm text-blue-700">
+                <p className="font-medium">처리 중입니다</p>
+                <p>잠시만 기다려 주세요. 인증이 완료되면 자동으로 창이 닫힙니다.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/Auth/LoginPage';
-import SignUpPage from './pages/Auth/SignupPage';
+import SignUpPage from './pages/Auth/SignUpPage';
 import MainApp from './MainApp'; 
 import FinancialApiConnector from './components/FinancialApiConnector';
 import KftcCallbackPage from './pages/kftc/KftcCallbackPage';
