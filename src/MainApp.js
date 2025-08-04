@@ -15,6 +15,7 @@ import SettlementPage from './components/payment/SettlementPage';
 import ReceiptManagementPage from './components/payment/ReceiptManagementPage';
 import KftcConnectPage from './pages/kftc/KftcConnectPage'; 
 import KftcCallbackPage from './pages/kftc/KftcCallbackPage'; 
+import Dashboard from './pages/Dashboard';
 // MainApp에서는 이제 더 이상 복잡한 탭 상태를 직접 관리하지 않습니다.
 // 라우터가 페이지를 결정하며, selectedGroupId는 HomePage 또는 GroupListPage에서 설정되어
 // props로 전달되거나 Context API로 관리됩니다.
@@ -124,7 +125,7 @@ function MainApp({ currentUsrId, onLogout }) {
               />
             } 
           />
-
+          <Route path="/auth/kftc/callback" element={<Dashboard />} />
           {/* 금융결재원 콜백 페이지 라우트 */}
           <Route 
             path="/auth/kftc/callback" 

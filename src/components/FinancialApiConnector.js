@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const CLIENT_ID = '9a92d41c-5c0b-40eb-8099-414c81c5631d';
 const AUTHORIZATION_URL = 'https://testapi.openbanking.or.kr/oauth/2.0/authorize';
-const API_SCOPE = 'login inquiry';
+const API_SCOPE = 'login inquiry transfer';
 const REDIRECT_URI = "http://localhost:3000/auth/kftc/callback";
 
 function FinancialApiConnector({ onApiConnected }) {
@@ -11,9 +11,24 @@ function FinancialApiConnector({ onApiConnected }) {
   const [modalMessage, setModalMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
 
+  // useRef로 interval ID를 관리
+  const checkClosedRef = useRef(null);
+  const popupRef = useRef(null);
+
   const closeModal = () => {
     setShowModal(false);
     setModalMessage('');
+  };
+
+  const cleanup = () => {
+    if (checkClosedRef.current) {
+      clearInterval(checkClosedRef.current);
+      checkClosedRef.current = null;
+    }
+    if (popupRef.current && !popupRef.current.closed) {
+      popupRef.current.close();
+      popupRef.current = null;
+    }
   };
 
   // 금융결재원 인가 요청 시작
@@ -35,13 +50,24 @@ function FinancialApiConnector({ onApiConnected }) {
     
     // 팝업 창 열기
     const popup = window.open(authUrl.toString(), 'kftc_auth', 'width=500,height=700');
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      // 팝업이 차단된 경우 처리
+      setErrorMessage('팝업이 차단되었습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
+      setIsLoading(false);
+      return;
+    }
+    
+    popupRef.current = popup;
     
     // 팝업이 닫혔는지 주기적으로 확인 (사용자가 강제로 닫은 경우 처리)
     const checkClosed = setInterval(() => {
       if (popup.closed) {
-        clearInterval(checkClosed);
+        cleanup();
         setIsLoading(false);
-        if (!showModal || !modalMessage.includes('성공')) {
+        clearInterval(checkClosed);
+        
+        // 성공 메시지가 표시되지 않았다면 취소로 간주
+        if (!modalMessage.includes('완료')) {
           setModalMessage('인증이 취소되었습니다.');
           setShowModal(true);
         }
@@ -49,10 +75,9 @@ function FinancialApiConnector({ onApiConnected }) {
     }, 1000);
   };
 
-  // 팝업 창에서 메시지 수신 처리
   useEffect(() => {
     function handleMessage(event) {
-      console.log('메시지 수신:', event);
+      // console.log('메시지 수신:', event);
       
       // 보안을 위해 origin 확인
       if (event.origin !== window.location.origin) {
@@ -64,6 +89,9 @@ function FinancialApiConnector({ onApiConnected }) {
         const accountInfo = event.data.accountInfo;
         console.log('팝업 창으로부터 계좌 정보 수신:', accountInfo);
         
+        // cleanup 먼저 실행
+        cleanup();
+        
         // 계좌 정보를 상위 컴포넌트로 전달
         if (onApiConnected) {
           onApiConnected(accountInfo);
@@ -73,18 +101,34 @@ function FinancialApiConnector({ onApiConnected }) {
         setModalMessage('금융결재원 연동이 완료되었습니다!');
         setShowModal(true);
         setIsLoading(false);
+        
       } else if (event.data && event.data.type === 'KFTC_AUTH_ERROR') {
         console.error('인증 오류:', event.data.error);
+        
+        cleanup();
         setErrorMessage(event.data.error || '인증 중 오류가 발생했습니다.');
-        setModalMessage('인증 중 오류가 발생했습니다: ' + (event.data.error || '알 수 없는 오류'));
+        setModalMessage('인증 중 오류가 발생했습니다:\n' + (event.data.error || '알 수 없는 오류'));
         setShowModal(true);
         setIsLoading(false);
       }
     }
     
+    // 이벤트 리스너 등록
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [onApiConnected]);
+    
+    // cleanup 함수
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      cleanup();
+    };
+  }, [onApiConnected]); // onApiConnected가 변경될 때만 재등록
+
+  // 컴포넌트 언마운트 시 cleanup
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, []);
 
   return (
     <div className="p-4">

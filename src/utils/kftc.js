@@ -3,6 +3,34 @@ import { KFTC_CONFIG } from '../config/kftc';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
 /**
+ * API 요청을 위한 기본 헤더 생성
+ */
+const getApiHeaders = (accessToken = null) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // JWT 토큰이 있으면 Authorization 헤더 추가
+  const jwtToken = localStorage.getItem('jwtToken');
+  if (jwtToken) {
+    headers['Authorization'] = `Bearer ${jwtToken}`;
+  }
+  
+  return headers;
+};
+
+/**
+ * API 응답 처리 유틸리티
+ */
+const handleApiResponse = async (response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+/**
  * 백엔드를 통한 KFTC 토큰 교환
  * @param {Object} params - { code, redirect_uri }
  * @returns {Promise<Object>} 토큰 응답
@@ -23,13 +51,21 @@ export const fetchKftcToken = async (params) => {
       body: JSON.stringify(params)
     });
 
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    console.log('토큰 교환 성공:', data);
+    const data = await handleApiResponse(response);
+    
+    // 토큰 정보 저장
+    if (data.accessToken) {
+      localStorage.setItem('kftc_access_token', data.accessToken);
+      localStorage.setItem('kftc_user_seq_no', data.userSeqNo);
+      localStorage.setItem('kftc_token_expires_at', 
+        new Date(Date.now() + (data.expiresIn * 1000)).toISOString());
+    }
     
     return {
       accessToken: data.accessToken,
@@ -65,15 +101,11 @@ export const fetchAccountInfoViaBackend = async (params) => {
       body: JSON.stringify(params)
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
+    const data = await handleApiResponse(response);
 
-    const accountInfo = await response.json();
-    console.log('계좌 정보 조회 성공:', accountInfo);
+    console.log('계좌 정보 조회 성공:', data);
     
-    return accountInfo;
+    return data;
     
   } catch (error) {
     console.error('계좌 정보 조회 실패:', error);
@@ -101,21 +133,18 @@ export const fetchTokenAndAccountInfo = async (params) => {
       body: JSON.stringify(params)
     });
 
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      // 백엔드에서 구조화된 오류 응답을 보내는 경우
-      const errorMessage = responseData.message || responseData.error || 
-                          `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(errorMessage);
+    const data = await handleApiResponse(response);
+    
+    // 토큰 정보를 로컬 스토리지에 저장
+    if (data.accessToken) {
+      localStorage.setItem('kftc_access_token', data.accessToken);
+      localStorage.setItem('kftc_user_seq_no', data.userSeqNo);
+      localStorage.setItem('kftc_token_expires_at', 
+        new Date(Date.now() + (data.expiresIn * 1000)).toISOString());
     }
-
-    console.log('통합 처리 성공:', responseData);
-    return responseData;
+    return data;
     
   } catch (error) {
-    console.error('통합 처리 실패:', error);
-    
     // 네트워크 오류인 경우
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error('네트워크 연결 오류가 발생했습니다.');
@@ -284,4 +313,108 @@ export const checkBackendHealth = async () => {
     console.error('백엔드 헬스체크 실패:', error);
     throw error;
   }
+};
+
+/**
+ * 계좌 잔액 조회
+ */
+export const fetchAccountBalance = async (fintechUseNum) => {
+  try {
+    const response = await fetch(`${KFTC_CONFIG.API_BASE_URL}/kftc/accounts/${fintechUseNum}/balance`, {
+      method: 'GET',
+      headers: getApiHeaders()
+    });
+
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.error('잔액 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 거래내역 조회
+ */
+export const fetchTransactionHistory = async (fintechUseNum, fromDate, toDate, sortOrder = 'DESC') => {
+  try {
+    const params = new URLSearchParams({
+      from_date: fromDate,
+      to_date: toDate,
+      sort_order: sortOrder
+    });
+
+    const response = await fetch(
+      `${KFTC_CONFIG.API_BASE_URL}/kftc/accounts/${fintechUseNum}/transactions?${params}`, {
+      method: 'GET',
+      headers: getApiHeaders()
+    });
+
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.error('거래내역 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 출금이체 (송금)
+ */
+export const processWithdrawTransfer = async (transferData) => {
+  try {
+    console.log('출금이체 요청:', transferData);
+    
+    const response = await fetch(`${KFTC_CONFIG.API_BASE_URL}/kftc/transfer/withdraw`, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify(transferData)
+    });
+
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.error('출금이체 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 입금이체 (수취)
+ */
+export const processDepositTransfer = async (transferData) => {
+  try {
+    console.log('입금이체 요청:', transferData);
+    
+    const response = await fetch(`${KFTC_CONFIG.API_BASE_URL}/kftc/transfer/deposit`, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify(transferData)
+    });
+
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.error('입금이체 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 토큰 유효성 검사
+ */
+export const isKftcTokenValid = () => {
+  const token = localStorage.getItem('kftc_access_token');
+  const expiresAt = localStorage.getItem('kftc_token_expires_at');
+  
+  if (!token || !expiresAt) {
+    return false;
+  }
+  
+  return new Date() < new Date(expiresAt);
+};
+
+/**
+ * 토큰 정리
+ */
+export const clearKftcTokens = () => {
+  localStorage.removeItem('kftc_access_token');
+  localStorage.removeItem('kftc_user_seq_no');
+  localStorage.removeItem('kftc_token_expires_at');
 };
