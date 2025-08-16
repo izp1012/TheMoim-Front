@@ -1,50 +1,55 @@
 import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode'; // 1. 라이브러리 임포트
 
-// (선택) 사용자 로그인 상태 관리를 위한 Recoil, Zustand, Redux 등의 상태 관리 훅
-// import { useSetRecoilState } from 'recoil';
-// import { userState } from '../../store/atom';
-
-function OAuthCallback() {
-  // URL의 쿼리 파라미터를 읽기 위한 훅
+// 2. App.js에서 넘겨준 onLoginSuccess prop을 받습니다.
+function OAuthCallback({ onLoginSuccess }) { 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  // const setUser = useSetRecoilState(userState); // Recoil 예시
 
   useEffect(() => {
-    // URL에서 accessToken과 refreshToken을 추출합니다.
+    // URL 쿼리 파라미터에서 accessToken을 가져옵니다.
     const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
 
     if (accessToken) {
-      console.log("로그인 성공! Access Token:", accessToken);
-
-      // 1. 토큰을 localStorage에 저장합니다. (가장 일반적인 방식)
-      //    보안이 더 중요하다면 httpOnly 쿠키를 사용하는 것이 좋습니다.
+      // 향후 API 요청을 위해 Access Token을 localStorage에 저장합니다.
       localStorage.setItem('accessToken', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
+      
+      try {
+        // 3. Access Token을 디코딩하여 사용자 정보를 추출합니다.
+        const decodedToken = jwtDecode(accessToken);
+        
+        // ⭐️ 중요: 백엔드에서 JWT를 생성할 때 넣은 사용자 ID의 key 값(claim 이름)을 사용해야 합니다.
+        // 보통 'id', 'sub', 'usrId' 등을 사용합니다. 백엔드 코드를 확인해보세요.
+        const usrId = decodedToken.id || decodedToken.sub; 
+
+        if (!usrId) {
+          throw new Error("JWT에 사용자 ID(id 또는 sub)가 포함되어 있지 않습니다.");
+        }
+
+        // 4. App.js의 로그인 성공 처리 함수를 호출합니다!
+        onLoginSuccess(usrId);
+        
+        // 5. 모든 처리가 끝났으므로 메인 페이지로 이동시킵니다.
+        // replace: true 옵션으로 뒤로가기 시 콜백 페이지로 돌아오지 않도록 합니다.
+        navigate('/', { replace: true });
+
+      } catch (error) {
+        console.error("토큰 처리 중 오류 발생:", error);
+        alert('로그인 처리에 실패했습니다. 다시 시도해주세요.');
+        navigate('/login', { replace: true });
       }
       
-      // 2. (선택) 전역 상태(Recoil, Redux 등)에 사용자 로그인 상태를 업데이트합니다.
-      //    예: 사용자 정보를 가져오는 API를 호출한 후 상태 업데이트
-      // const userData = await getMyInfo(accessToken);
-      // setUser(userData);
-
-      // 3. 토큰 저장 후 사용자를 메인 페이지 또는 기존에 접근하려던 페이지로 이동시킵니다.
-      alert('로그인에 성공했습니다.');
-      navigate('/');
-      
     } else {
-      // 토큰이 없는 경우, 에러 처리
-      alert('로그인에 실패했습니다. 다시 시도해주세요.');
-      navigate('/login');
+      // URL에 토큰이 없는 비정상적인 경우
+      alert('로그인에 실패했습니다. (인증 정보 없음)');
+      navigate('/login', { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행합니다.
+    // useEffect의 의존성 배열에 함수와 객체를 추가합니다.
+  }, [onLoginSuccess, navigate, searchParams]);
 
-  // 로직 처리 중에는 사용자에게 로딩 중임을 알려주는 것이 좋습니다.
-  return <div>로그인 처리 중입니다...</div>;
+  // 로직이 실행되는 동안 사용자에게 보여줄 화면
+  return <div>소셜 로그인 처리 중입니다. 잠시만 기다려주세요...</div>;
 }
 
 export default OAuthCallback;

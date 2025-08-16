@@ -67,7 +67,10 @@ function App() {
             connectedAccountInfo={connectedAccountInfo} 
             onKftcApiConnected={handleKftcApiConnected}/> : <Navigate to="/login" replace />}
         />
-        <Route path="/oauth/callback" element={<OAuthCallback />}></Route>
+        <Route 
+          path="/oauth/callback" 
+          element={<OAuthCallback onLoginSuccess={handleLoginSuccess} />} 
+        />
       </Routes>
     </Router>
   );
