@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/Auth/LoginPage';
 import SignUpPage from './pages/Auth/SignupPage';
+import OAuthCallback from './pages/Auth/OAuthCallback';
 import MainApp from './MainApp'; 
 import FinancialApiConnector from './components/FinancialApiConnector';
 import KftcCallbackPage from './pages/kftc/KftcCallbackPage';
@@ -66,6 +67,7 @@ function App() {
             connectedAccountInfo={connectedAccountInfo} 
             onKftcApiConnected={handleKftcApiConnected}/> : <Navigate to="/login" replace />}
         />
+        <Route path="/oauth/callback" element={<OAuthCallback />}></Route>
       </Routes>
     </Router>
   );
