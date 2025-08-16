@@ -31,24 +31,23 @@ const login = async (usrname, password) => {
   try {
     const response = await authApi.post('/login', { usrname, password });
     // 서버에서 반환하는 토큰이나 사용자 정보를 저장
-    console.log(response.data.data.jwtToken);
-    localStorage.setItem('jwt-token', response.data.data.jwtToken);
     // 예: localStorage.setItem('usrId', response.data.usrId);
     return response.data; // 로그인 성공 시 사용자 정보 등 반환
   } catch (error) {
-    console.error('로그인 실패:', error.response ? error.response.data : error.message);
-    throw new Error(error.response?.data?.message || '로그인에 실패했습니다.');
+    console.error('로그인 실패:', error.response ? error.response.data : error.msg);
+    throw new Error(error.response?.data?.msg || '로그인에 실패했습니다.');
   }
 };
 
 // 일반 회원가입 API
 const signup = async (usrname, email, password) => {
   try {
-    const response = await authApi.post('/signup', { usrname, email, password });
+    const response = await authApi.post('/signup', {usrname, email, password });
     return response.data; // 회원가입 성공 시 정보 반환
   } catch (error) {
-    console.error('회원가입 실패:', error.response ? error.response.data : error.message);
-    throw new Error(error.response?.data?.message || '회원가입에 실패했습니다.');
+    // console.error('회원가입 실패:', error.response ? error.response.data : error.msg);
+    console.error('회원가입 실패:', error.response?.data?.msg);
+    throw new Error(error.response?.data?.msg || '회원가입에 실패했습니다.');
   }
 };
 
