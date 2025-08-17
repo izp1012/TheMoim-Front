@@ -43,7 +43,7 @@ function HomePage({ currentUsrId, onSelectGroup }) {
     const handleCreateGroupSuccessFromHome = async (groupData) => {
         try {
             const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
-            alert(`그룹 '${newGroup.groupName}'이(가) 생성되었습니다!`);
+            alert(`그룹 '${newGroup.moimName}'이(가) 생성되었습니다!`);
             setDefaultGroup(newGroup); // 새로 생성된 그룹을 기본 그룹으로 설정
             navigate(`/groups/${newGroup.id}/details`); // 새 그룹의 상세 페이지로 이동
         } catch (err) {
