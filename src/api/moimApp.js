@@ -53,7 +53,6 @@ export const createGroup = async (groupData) => {
         });
         
         const newMoim = response.data.data;
-        alert(newMoim);
         return {
             id: newMoim.id,
             moimname: newMoim.moimname,
