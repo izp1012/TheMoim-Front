@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import '../../App.css';
-import { getGroupPayments } from '../../api/moimApp';
+import { getPaymentsByGroupId } from '../../api/moimApp';
 
 function SettlementPage() {
   const { groupId } = useParams();
@@ -15,7 +15,7 @@ function SettlementPage() {
     const fetchPayments = async () => {
       try {
         setLoading(true);
-        const data = await getGroupPayments(groupId);
+        const data = await getPaymentsByGroupId(groupId);
         setPayments(data);
       } catch (err) {
         setError('결제 내역을 불러오는 데 실패했습니다.');

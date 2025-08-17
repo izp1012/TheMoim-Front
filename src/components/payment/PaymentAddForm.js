@@ -1,135 +1,134 @@
-// src/components/payment/PaymentAddForm.js
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import '../../App.css';
-import { addPayment, getGroupMembers } from '../../api/moimApp';
+import { getGroupMembers, addPayment } from '../../api/moimApp';
 
 function PaymentAddForm() {
-  const { groupId } = useParams();
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [paymentType, setPaymentType] = useState('EXPENSE'); // 'INCOME', 'EXPENSE'
-  const [payerMemberId, setPayerMemberId] = useState(''); // 돈을 낸 회원 ID (UsrGroupMember ID)
-  const [groupMembers, setGroupMembers] = useState([]); // 그룹 회원 목록
+    const { groupId } = useParams();
+    const navigate = useNavigate();
+    
+    const [members, setMembers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchGroupMembers = async () => {
-      try {
+    const [amount, setAmount] = useState('');
+    const [description, setDescription] = useState('');
+    const [paymentDate, setPaymentDate] = useState('');
+    const [payerMemberId, setPayerMemberId] = useState('');
+
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const membersData = await getGroupMembers(groupId);
+                setMembers(membersData);
+                if (membersData.length > 0) {
+                    setPayerMemberId(membersData[0].id); // 첫 번째 멤버를 기본값으로 설정
+                }
+            } catch (err) {
+                setError('회원 목록을 불러오는 데 실패했습니다.');
+                console.error("Fetch members error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         if (groupId) {
-          const members = await getGroupMembers(groupId);
-          setGroupMembers(members);
-          if (members.length > 0) {
-            setPayerMemberId(members[0].id.toString()); // 첫 번째 회원을 기본값으로 설정
-          }
+            fetchMembers();
         }
-      } catch (err) {
-        console.error("그룹 회원 목록 불러오기 실패:", err);
-      }
+    }, [groupId]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+
+        if (!payerMemberId || !amount || !paymentDate) {
+            setError('필수 입력 항목을 모두 채워주세요.');
+            return;
+        }
+
+        try {
+            // 백엔드 PaymentReqDTO에 맞춰 데이터를 전송
+            const paymentData = {
+                moimId: parseInt(groupId),
+                amount: parseFloat(amount),
+                description: description.trim(),
+                paymentDate: paymentDate, // 날짜 형식에 맞게 변환 필요
+                payerMemberId: parseInt(payerMemberId),
+            };
+
+            await addPayment(paymentData);
+            alert('결제 내역이 성공적으로 추가되었습니다.');
+            navigate(`/groups/${groupId}/details`); // 상세 페이지로 이동
+        } catch (err) {
+            setError(`결제 추가 실패: ${err.message || '알 수 없는 오류'}`);
+        }
     };
-    fetchGroupMembers();
-  }, [groupId]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (amount.trim() === '' || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      alert('유효한 금액을 입력해주세요.');
-      return;
-    }
-    if (description.trim() === '') {
-      alert('설명은 필수입니다.');
-      return;
-    }
-    if (paymentType === 'EXPENSE' && !payerMemberId) {
-      alert('지출의 경우 돈을 낸 회원을 선택해주세요.');
-      return;
-    }
+    if (loading) return <div>회원 목록을 불러오는 중...</div>;
+    if (error) return <div className="error-message">{error}</div>;
 
-    try {
-      const paymentData = {
-        amount: parseFloat(amount),
-        description,
-        type: paymentType,
-        paymentDate: new Date().toISOString().split('T')[0], // 오늘 날짜 YYYY-MM-DD
-        payerMemberId: paymentType === 'EXPENSE' ? parseInt(payerMemberId) : null, // 수입일 경우 null
-      };
-      await addPayment(groupId, paymentData);
-      alert('금액이 성공적으로 추가되었습니다!');
-      // 폼 초기화
-      setAmount('');
-      setDescription('');
-      setPaymentType('EXPENSE');
-    } catch (err) {
-      alert(`금액 추가 실패: ${err.message || '알 수 없는 오류'}`);
-    }
-  };
+    return (
+        <div className="payment-form-container">
+            <h3>모임비 내역 추가</h3>
+            <form onSubmit={handleSubmit}>
+                {error && <p className="error-message">{error}</p>}
+                
+                <div className="form-group">
+                    <label>지불자</label>
+                    <select
+                        value={payerMemberId}
+                        onChange={(e) => setPayerMemberId(e.target.value)}
+                        className="select-field"
+                        required
+                    >
+                        {members.map(member => (
+                            <option key={member.id} value={member.id}>
+                                {member.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-  return (
-    <div className="form-card">
-      <h2>금액 추가</h2>
-      <form onSubmit={handleSubmit}>
-        <label className="form-label">
-          구분
-          <select
-            value={paymentType}
-            onChange={(e) => setPaymentType(e.target.value)}
-            className="select-field full-width"
-          >
-            <option value="EXPENSE">지출</option>
-            <option value="INCOME">수입</option>
-          </select>
-        </label>
+                <div className="form-group">
+                    <label>금액 (원)</label>
+                    <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="input-field"
+                        placeholder="예: 10000"
+                        required
+                    />
+                </div>
 
-        <label className="form-label">
-          금액 (원)
-          <input
-            type="number"
-            placeholder="금액을 입력해주세요."
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="input-field full-width"
-            required
-          />
-        </label>
+                <div className="form-group">
+                    <label>내용</label>
+                    <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="input-field"
+                        placeholder="예: 저녁 식사비"
+                    />
+                </div>
 
-        <label className="form-label">
-          설명
-          <input
-            type="text"
-            placeholder="예: 점심 식비, 회비 납부"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="input-field full-width"
-            required
-          />
-        </label>
+                <div className="form-group">
+                    <label>결제일</label>
+                    <input
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
+                        className="input-field"
+                        required
+                    />
+                </div>
 
-        {paymentType === 'EXPENSE' && groupMembers.length > 0 && (
-          <label className="form-label">
-            돈을 낸 회원
-            <select
-              value={payerMemberId}
-              onChange={(e) => setPayerMemberId(e.target.value)}
-              className="select-field full-width"
-              required={paymentType === 'EXPENSE'}
-            >
-              {groupMembers.map(member => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {paymentType === 'EXPENSE' && groupMembers.length === 0 && (
-          <p className="small-text error-message">회원 목록을 불러올 수 없거나, 그룹에 등록된 회원이 없습니다.</p>
-        )}
-
-        <button type="submit" className="submit-button-large">
-          등록
-        </button>
-      </form>
-    </div>
-  );
+                <button type="submit" className="submit-button-large">
+                    내역 추가하기
+                </button>
+            </form>
+        </div>
+    );
 }
 
 export default PaymentAddForm;

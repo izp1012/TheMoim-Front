@@ -13,6 +13,7 @@ import MemberAddForm from './components/member/MemberAddForm'; // 그룹에 회�
 import PaymentAddForm from './components/payment/PaymentAddForm';
 import SettlementPage from './components/payment/SettlementPage';
 import ReceiptManagementPage from './components/payment/ReceiptManagementPage';
+import PaymentListPage from './pages/PaymentListPage'
 import KftcConnectPage from './pages/kftc/KftcConnectPage'; 
 import KftcCallbackPage from './pages/kftc/KftcCallbackPage'; 
 import Dashboard from './pages/Dashboard';
@@ -26,11 +27,7 @@ function MainApp({ currentUsrId, onLogout }) {
   const location = useLocation(); // 현재 경로 확인
   const [selectedGroupId, setSelectedGroupId] = useState(null); // 현재 선택된 그룹 ID
   const [connectedAccountInfo, setConnectedAccountInfo] = useState(null);
-
-  // 계좌 연결 성공 시 호출될 함수
-  const onBankApiConnected = (accountInfo) => {
-    setConnectedAccountInfo(accountInfo);
-  };
+  const [groups, setGroups] = useState([]);
 
   // URL 파라미터에서 groupId를 추출하여 selectedGroupId에 설정
   useEffect(() => {
@@ -48,24 +45,35 @@ function MainApp({ currentUsrId, onLogout }) {
     }
   }, [location.pathname]); // 경로가 변경될 때마다 실행
 
+  // 사용자가 속한 모임 목록을 API에서 불러와 groups 상태에 저장
+  useEffect(() => {
+    const fetchGroups = async () => {
+        if (currentUsrId) {
+            try {
+                const fetchedGroups = await getGroupsByUserId(currentUsrId);
+                setGroups(fetchedGroups);
+            } catch (error) {
+                console.error("Failed to fetch groups:", error);
+            }
+        }
+    };
+    fetchGroups();
+  }, [currentUsrId]);
+
+  
+  // 계좌 연결 성공 시 호출될 함수
+  const onBankApiConnected = (accountInfo) => {
+    setConnectedAccountInfo(accountInfo);
+  };
+
   const handleCreateGroup = async (groupData) => {
     try {
-      // API 호출: groupData (groupName, description)와 생성자 ID (currentUsrId)를 함께 보냄
-      const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
-      alert(`그룹 '${newGroup.groupName}'이(가) 성공적으로 생성되었습니다!`);
-
-      // 그룹 생성 성공 후, 그룹 목록 또는 새로 생성된 그룹의 상세 페이지로 이동
-      // 예를 들어, 생성된 그룹의 상세 페이지로 이동:
-      navigate(`/groups/${newGroup.id}/details`);
-      // 또는 그룹 목록으로 이동:
-      // navigate('/groups');
-
-      // 필요한 경우, 그룹 목록을 다시 불러오거나 상태를 업데이트
-      // (MainApp에서 모든 그룹 목록을 관리한다면, 여기에 업데이트 로직 추가)
-      // fetchGroups(); // 그룹 목록 새로고침
+        const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
+        alert(`그룹 '${newGroup.groupName}'이(가) 성공적으로 생성되었습니다!`);
+        navigate(`/groups/${newGroup.id}/details`);
     } catch (err) {
-      alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
-      console.error("그룹 생성 중 오류 발생:", err);
+        alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
+        console.error("그룹 생성 중 오류 발생:", err);
     }
   };
 
@@ -99,7 +107,7 @@ function MainApp({ currentUsrId, onLogout }) {
           <Route path="/" element={<HomePage currentUsrId={currentUsrId} onSelectGroup={handleSelectGroupFromList} />} />
 
           {/* 그룹 관리 라우트 */}
-          <Route path="/groups" element={<GroupListPage onSelectGroup={handleSelectGroupFromList} />} />
+          <Route path="/groups" element={<GroupListPage groups={groups} onSelectGroup={handleSelectGroupFromList} />} />
           {/* 그룹 추가 페이지 - 여기서 handleCreateGroup 함수를 onCreateGroup 프롭스로 전달 */}
           <Route path="/groups/add" element={<GroupAddForm onCreateGroup={handleCreateGroup} onCancel={() => navigate('/groups')} />} />
           
@@ -107,14 +115,14 @@ function MainApp({ currentUsrId, onLogout }) {
           <Route path="/groups/:groupId/details" element={<GroupDetailsPage />} />
           <Route path="/groups/:groupId/members" element={<MemberListPage />} />
           <Route path="/groups/:groupId/members/add" element={<MemberAddForm />} />
-
+          <Route path="/groups/:groupId/payments/:paymentId/receipts" element={<ReceiptManagementPage />} />
           {/* 모임비 관리 라우트 (selectedGroupId가 필요하므로 라우트 파라미터로 명시) */}
           {/* MainApp의 selectedGroupId state를 넘겨주기 위해 element props를 사용하는 대신 render props나 wrapper 컴포넌트를 고려할 수 있으나,
              여기서는 간단화를 위해 selectedGroupId를 직접 넘겨줌. 실제 앱에서는 Context API가 더 적합. */}
           <Route path="/groups/:groupId/payments/add" element={selectedGroupId ? <PaymentAddForm groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
           <Route path="/groups/:groupId/payments/settlement" element={selectedGroupId ? <SettlementPage groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
           <Route path="/groups/:groupId/payments/receipts" element={selectedGroupId ? <ReceiptManagementPage groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
-
+          <Route path="/groups/:groupId/payments/list" element={<PaymentListPage />} />
           {/* 금융결재원 연동 페이지 라우트 */}
           <Route 
             path="/bank-connect" 
