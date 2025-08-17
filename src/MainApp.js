@@ -69,7 +69,7 @@ function MainApp({ currentUsrId, onLogout }) {
   const handleCreateGroup = async (groupData) => {
     try {
         const newGroup = await createGroup({ ...groupData, createdByUsrId: currentUsrId });
-        alert(`그룹 '${newGroup.groupName}'이(가) 성공적으로 생성되었습니다!`);
+        alert(`그룹 '${newGroup.moimname}'이(가) 성공적으로 생성되었습니다!`);
         navigate(`/groups/${newGroup.id}/details`);
     } catch (err) {
         alert(`그룹 생성 실패: ${err.message || '알 수 없는 오류'}`);
@@ -105,9 +105,7 @@ function MainApp({ currentUsrId, onLogout }) {
         )}
         <Routes>
           <Route path="/" element={<HomePage currentUsrId={currentUsrId} onSelectGroup={handleSelectGroupFromList} />} />
-
-          {/* 그룹 관리 라우트 */}
-          <Route path="/groups" element={<GroupListPage groups={groups} onSelectGroup={handleSelectGroupFromList} />} />
+          <Route path="/groups" element={<HomePage currentUsrId={currentUsrId} onSelectGroup={handleSelectGroupFromList} />} />
           {/* 그룹 추가 페이지 - 여기서 handleCreateGroup 함수를 onCreateGroup 프롭스로 전달 */}
           <Route path="/groups/add" element={<GroupAddForm onCreateGroup={handleCreateGroup} onCancel={() => navigate('/groups')} />} />
           
