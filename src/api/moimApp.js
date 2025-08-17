@@ -8,7 +8,7 @@ const moimApi = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 5000,
+    timeout: 300000,
 });
 
 moimApi.interceptors.request.use(
@@ -47,17 +47,18 @@ moimApi.interceptors.response.use(
 export const createGroup = async (groupData) => {
     try {
         const response = await moimApi.post('/moims', {
-            moimname: groupData.groupName,
-            moimdesp: groupData.description,
+            moimname: groupData.moimName,
+            moimdesp: groupData.moimDesp,
             createdByUsrId: groupData.createdByUsrId
         });
         
-        const newMoim = response.data;
+        const newMoim = response.data.data;
+        alert(newMoim);
         return {
             id: newMoim.id,
-            groupName: newMoim.moimname,
-            description: newMoim.moimdesp,
-            createdAt: newMoim.createdAt
+            moimname: newMoim.moimname,
+            moimname: newMoim.moimdesp,
+            createdAt: newMoim.createdByUsrId
         };
     } catch (error) {
         throw error;
@@ -68,7 +69,7 @@ export const getGroupsByUserId = async (userId) => {
     try {
         const response = await moimApi.get(`/moims/by-usr/${userId}`);
         
-        return response.data.map(moim => ({
+        return response.data.data.map(moim => ({
             id: moim.id,
             groupName: moim.moimname,
             description: moim.moimdesp,
