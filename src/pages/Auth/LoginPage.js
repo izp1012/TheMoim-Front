@@ -20,8 +20,8 @@ function LoginPage({ onLoginSuccess }) {
     try {     
       const usrData = await login(usrname, password);
       alert(`환영합니다, ${usrData.data.usrname}님!`);
-      onLoginSuccess(usrData.data.usrname);
-      navigate('/');
+      onLoginSuccess(usrData.data.usrId);
+      // navigate('/');
     } catch (err) {
       setError(err.message);
     }

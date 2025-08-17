@@ -18,10 +18,7 @@ function OAuthCallback({ onLoginSuccess }) {
       try {
         // 3. Access Token을 디코딩하여 사용자 정보를 추출합니다.
         const decodedToken = jwtDecode(accessToken);
-        
-        // ⭐️ 중요: 백엔드에서 JWT를 생성할 때 넣은 사용자 ID의 key 값(claim 이름)을 사용해야 합니다.
-        // 보통 'id', 'sub', 'usrId' 등을 사용합니다. 백엔드 코드를 확인해보세요.
-        const usrId = decodedToken.id || decodedToken.sub; 
+        const usrId = decodedToken.id;
 
         if (!usrId) {
           throw new Error("JWT에 사용자 ID(id 또는 sub)가 포함되어 있지 않습니다.");
