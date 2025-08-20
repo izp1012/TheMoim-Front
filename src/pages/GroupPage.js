@@ -7,7 +7,7 @@ function GroupPage() {
 
   const createGroup = async () => {
     try {
-      const res = await axios.post('http://localhost:8080/api/groups?name=' + groupName);
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}api/groups?name=` + groupName);
       alert('Group created: ' + res.data.name);
     } catch (e) {
       console.error(e);

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API 기본 URL 설정
-const MOIM_API_BASE_URL = 'http://localhost:8080/api/v1';
+const MOIM_API_BASE_URL = process.env.REACT_APP_MOIM_API_BASE_URL;
 
 const moimApi = axios.create({
     baseURL: MOIM_API_BASE_URL,
