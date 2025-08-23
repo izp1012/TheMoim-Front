@@ -1,7 +1,7 @@
 // src/config/kftc.js
 export const KFTC_CONFIG = {
-  CLIENT_ID: process.env.REACT_APP_KFTC_CLIENT_ID || '9a92d41c-5c0b-40eb-8099-414c81c5631d',
-  REDIRECT_URI: process.env.REACT_APP_KFTC_REDIRECT_URI || 'http://localhost:3000/auth/kftc/callback',
+  CLIENT_ID: process.env.REACT_APP_KFTC_CLIENT_ID,
+  REDIRECT_URI: process.env.REACT_APP_KFTC_REDIRECT_URI,
   AUTH_URL: 'https://testapi.openbanking.or.kr/oauth/2.0/authorize',
   TOKEN_URL: 'https://testapi.openbanking.or.kr/oauth/2.0/token',
   API_BASE_URL: 'https://testapi.openbanking.or.kr',

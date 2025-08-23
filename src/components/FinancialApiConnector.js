@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 const CLIENT_ID = '9a92d41c-5c0b-40eb-8099-414c81c5631d';
 const AUTHORIZATION_URL = 'https://testapi.openbanking.or.kr/oauth/2.0/authorize';
 const API_SCOPE = 'login inquiry transfer';
-const REDIRECT_URI = "http://localhost:3000/auth/kftc/callback";
+const REDIRECT_URI = process.env.REACT_APP_KFTC_REDIRECT_URI;
 
 function FinancialApiConnector({ onApiConnected }) {
   const [isLoading, setIsLoading] = useState(false);

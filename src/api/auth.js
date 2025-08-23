@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // 백엔드 인증 관련 API의 기본 URL 설정
-const AUTH_API_BASE_URL = process.env.REACT_APP_AUTH_API_BASE_URL || 'http://localhost:8080/api/';
+const AUTH_API_BASE_URL = process.env.REACT_APP_AUTH_API_BASE_URL;
 
 const authApi = axios.create({
   baseURL: AUTH_API_BASE_URL,
@@ -66,7 +66,7 @@ const kakaoLogin = async () => {
 const googleLogin = async () => {
   console.log('Google 소셜 로그인 버튼 클릭됨');
   // alert('Google 소셜 로그인 기능 구현 예정 (실제 SDK 연동 필요)');
-  window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  window.location.href = process.env.REACT_APP_AUTH_API_BASE_URL;
   // 실제 Google 로그인 SDK를 사용하여 인증 흐름 시작
   // 예: google.accounts.id.prompt();
   // 이후 백엔드로 인증 토큰을 보내 로그인 처리
