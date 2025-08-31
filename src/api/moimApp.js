@@ -13,7 +13,7 @@ const moimApi = axios.create({
 
 moimApi.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('jwt-token');
+        const token = localStorage.getItem('accessToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -29,18 +29,117 @@ moimApi.interceptors.response.use(
     response => {
         return response;
     },
-    error => {
-        // 서버에서 반환하는 에러 메시지를 사용자에게 보여줍니다.
-        const errorMessage = error.response?.data?.msg || error.response?.data || error.message;
-        console.error('API Call Error:', errorMessage);
-        
-        if (error.response && error.response.status === 401) {
-             // 401 Unauthorized 에러 발생 시 로그인 페이지로 리다이렉트
-             // window.location.href = '/login';
+    async (error) => {
+        const originalRequest = error.config;
+        const isTokenExpired = error.response?.status === 401 && !originalRequest._retry;
+    
+        // 만료된 토큰이 감지되면 (401 에러)
+        if (isTokenExpired) {
+          originalRequest._retry = true; // 재요청 플래그 설정
+          
+          const refreshToken = cookieSto.getItem('refreshToken');
+
+          if (refreshToken) {
+            try {
+              // 1. Refresh Token을 사용해 새로운 Access Token 요청
+              const response = await authApi.post('/api/token/refreshToken', accessToken, {
+                headers: {
+                  'Authorization': `Bearer ${refreshToken}`
+                }
+              });
+    
+              const { accessToken, refreshToken: newRefreshToken } = response.data;
+    
+              // 2. 새로운 토큰을 로컬 스토리지에 저장
+              localStorage.setItem('accessToken', accessToken);
+              localStorage.setItem('refreshToken', newRefreshToken);
+    
+              // 3. 원래 요청의 헤더를 새 Access Token으로 업데이트
+              authApi.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+              originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+    
+              console.log('토큰 재발급 및 원래 요청 재시도 성공');
+              
+              // 4. 원래의 실패한 요청 재시도
+              return authApi(originalRequest);
+            } catch (refreshError) {
+              // Refresh Token마저 만료되었거나 유효하지 않은 경우, 로그아웃 처리
+              console.error('Refresh Token이 만료되었거나 유효하지 않습니다. 로그아웃 처리.');
+              localStorage.clear();
+              router.push('/login');
+              return Promise.reject(refreshError);
+            }
+          } else {
+            // Refresh Token이 없으면 로그인 페이지로 리다이렉션
+            console.error('Refresh Token이 없습니다. 로그아웃 처리.');
+            localStorage.clear();
+            router.push('/login');
+            return Promise.reject(error);
+          }
         }
+    
+        // 토큰 만료가 아닌 다른 401 에러는 그대로 반환
         return Promise.reject(new Error(errorMessage));
     }
 );
+
+moimApi.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async (error) => {
+      const originalRequest = error.config;
+      const isTokenExpired = error.response?.status === 401 && !originalRequest._retry;
+  
+      // 만료된 토큰이 감지되면 (401 에러)
+      if (isTokenExpired) {
+        originalRequest._retry = true; // 재요청 플래그 설정
+        
+        const refreshToken = localStorage.getItem('refreshToken');
+        // const accessToken = localStorage.getItem('accessToken');
+        if (refreshToken) {
+          try {
+            // 1. Refresh Token을 사용해 새로운 Access Token 요청
+            const response = await authApi.post('/api/token/refreshToken', null, {
+              headers: {
+                'Authorization': `Bearer ${refreshToken}`
+              }
+            });
+  
+            const { accessToken, refreshToken: newRefreshToken } = response.data;
+  
+            // 2. 새로운 토큰을 로컬 스토리지에 저장
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', newRefreshToken);
+  
+            // 3. 원래 요청의 헤더를 새 Access Token으로 업데이트
+            authApi.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+  
+            console.log('토큰 재발급 및 원래 요청 재시도 성공');
+            
+            // 4. 원래의 실패한 요청 재시도
+            return authApi(originalRequest);
+          } catch (refreshError) {
+            // Refresh Token마저 만료되었거나 유효하지 않은 경우, 로그아웃 처리
+            console.error('Refresh Token이 만료되었거나 유효하지 않습니다. 로그아웃 처리.');
+            localStorage.clear();
+            router.push('/login');
+            return Promise.reject(refreshError);
+          }
+        } else {
+          // Refresh Token이 없으면 로그인 페이지로 리다이렉션
+          console.error('Refresh Token이 없습니다. 로그아웃 처리.');
+          localStorage.clear();
+          router.push('/login');
+          return Promise.reject(error);
+        }
+      }
+  
+      // 토큰 만료가 아닌 다른 401 에러는 그대로 반환
+      return Promise.reject(error);
+    }
+  );
 
 // --- 모임(그룹) 관련 API ---
 

@@ -25,7 +25,7 @@ function OAuthCallback({ onLoginSuccess }) {
         }
 
         // 4. App.js의 로그인 성공 처리 함수를 호출합니다!
-        onLoginSuccess(usrId);
+        onLoginSuccess({ usrId: usrId, accessToken: accessToken }); 
         
         // 5. 모든 처리가 끝났으므로 메인 페이지로 이동시킵니다.
         // replace: true 옵션으로 뒤로가기 시 콜백 페이지로 돌아오지 않도록 합니다.

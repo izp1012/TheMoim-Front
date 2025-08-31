@@ -87,7 +87,9 @@ function MainApp({ currentUsrId, onLogout }) {
           
           <Route path="/groups/:groupId/details" element={<GroupDetailsPage />} />
           <Route path="/groups/:groupId/members" element={<MemberListPage />} />
-         
+          {/* MemberAddForm 라우팅을 GroupDetailsPage 내부에서 처리하므로 여기서 삭제 */}
+          {/* <Route path="/groups/:groupId/members/add" element={<MemberAddForm />} /> */}
+
           <Route path="/groups/:groupId/payments/:paymentId/receipts" element={<ReceiptManagementPage />} />
           <Route path="/groups/:groupId/payments/add" element={selectedGroupId ? <PaymentAddForm groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />
           <Route path="/groups/:groupId/payments/settlement" element={selectedGroupId ? <SettlementPage groupId={selectedGroupId} /> : <div>그룹을 선택해주세요.</div>} />

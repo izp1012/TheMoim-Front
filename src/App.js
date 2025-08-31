@@ -23,16 +23,21 @@ function App() {
     }
   }, []);
 
-  const handleLoginSuccess = (usrId) => {
+  const handleLoginSuccess = (usrData) => {
+
+    const { usrId, accessToken } = usrData;
+
     setIsLoggedIn(true);
     setCurrentUsrId(usrId);
     localStorage.setItem('usrId', usrId);
+    localStorage.setItem('accessToken', accessToken);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUsrId(null);
     localStorage.removeItem('usrId');
+    localStorage.removeItem('accessToken');
     setConnectedAccountInfo(null);
     // localStorage.removeItem('token');
     alert('로그아웃 되었습니다.');
