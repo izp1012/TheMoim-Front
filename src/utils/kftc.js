@@ -44,8 +44,8 @@ export const fetchKftcToken = async (params) => {
       headers: {
         'Content-Type': 'application/json',
         // JWT 토큰이 있다면 추가
-        ...(localStorage.getItem('jwt-token') && {
-          'Authorization': `Bearer ${localStorage.getItem('jwt-token')}`
+        ...(localStorage.getItem('accessToken') && {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         })
       },
       body: JSON.stringify(params)
@@ -94,8 +94,8 @@ export const fetchAccountInfoViaBackend = async (params) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(localStorage.getItem('jwt-token') && {
-          'Authorization': `Bearer ${localStorage.getItem('jwt-token')}`
+        ...(localStorage.getItem('accessToken') && {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         })
       },
       body: JSON.stringify(params)
@@ -126,8 +126,8 @@ export const fetchTokenAndAccountInfo = async (params) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(localStorage.getItem('jwt-token') && {
-          'Authorization': `Bearer ${localStorage.getItem('jwt-token')}`
+        ...(localStorage.getItem('accessToken') && {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         })
       },
       body: JSON.stringify(params)
@@ -275,8 +275,8 @@ export const fetchLatestBalance = async (params) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(localStorage.getItem('jwt-token') && {
-          'Authorization': `Bearer ${localStorage.getItem('jwt-token')}`
+        ...(localStorage.getItem('accessToken') && {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         })
       },
       body: JSON.stringify(params)

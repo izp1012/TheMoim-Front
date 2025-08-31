@@ -20,7 +20,7 @@ function LoginPage({ onLoginSuccess }) {
     try {     
       const usrData = await login(usrname, password);
       alert(`환영합니다, ${usrData.data.usrname}님!`);
-      onLoginSuccess(usrData);
+      onLoginSuccess({usrId : usrData.data.usrId, accessToken : usrData.data.jwtToken});
       // navigate('/');
     } catch (err) {
       setError(err.message);

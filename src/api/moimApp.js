@@ -37,12 +37,12 @@ moimApi.interceptors.response.use(
         if (isTokenExpired) {
           originalRequest._retry = true; // 재요청 플래그 설정
           
-          const refreshToken = cookieSto.getItem('refreshToken');
+          const refreshToken = localStorage.getItem('refreshToken');
 
           if (refreshToken) {
             try {
               // 1. Refresh Token을 사용해 새로운 Access Token 요청
-              const response = await authApi.post('/api/token/refreshToken', accessToken, {
+              const response = await moimApi.post('/api/token/refreshToken', accessToken, {
                 headers: {
                   'Authorization': `Bearer ${refreshToken}`
                 }
@@ -96,39 +96,39 @@ moimApi.interceptors.response.use(
         originalRequest._retry = true; // 재요청 플래그 설정
         
         const refreshToken = localStorage.getItem('refreshToken');
-        // const accessToken = localStorage.getItem('accessToken');
+
         if (refreshToken) {
-          try {
-            // 1. Refresh Token을 사용해 새로운 Access Token 요청
-            const response = await authApi.post('/api/token/refreshToken', null, {
-              headers: {
-                'Authorization': `Bearer ${refreshToken}`
-              }
-            });
-  
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
-  
-            // 2. 새로운 토큰을 로컬 스토리지에 저장
+            try {
+                // 1. DTO 객체를 생성하여 요청 본문에 담아 전송
+            const tokenDTO = {
+                refreshToken: refreshToken
+            };
+
+            // 2. 리프레시 토큰을 이용해 새로운 Access Token 요청
+            const response = await axiosInstance.post('/api/token/refreshToken', tokenDTO);
+
+            const { accessToken } = response.data;
+
+            // 3. 새로운 Access Token을 로컬 스토리지에 저장
             localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-  
-            // 3. 원래 요청의 헤더를 새 Access Token으로 업데이트
-            authApi.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+            // 4. 원래 요청의 Authorization 헤더를 새 Access Token으로 업데이트
+            moimApi.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
             originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-  
-            console.log('토큰 재발급 및 원래 요청 재시도 성공');
+    
+            console.log('Access Token이 성공적으로 재발급되었습니다. 원래 요청을 다시 시도합니다.');
             
-            // 4. 원래의 실패한 요청 재시도
-            return authApi(originalRequest);
+            // 5. 원래의 실패한 요청 재시도
+            return moimApi(originalRequest);
           } catch (refreshError) {
-            // Refresh Token마저 만료되었거나 유효하지 않은 경우, 로그아웃 처리
-            console.error('Refresh Token이 만료되었거나 유효하지 않습니다. 로그아웃 처리.');
+            // 리프레시 토큰마저 만료되었거나 유효하지 않은 경우, 로그아웃 처리
+            console.error('Refresh Token이 유효하지 않습니다. 로그아웃 처리.');
             localStorage.clear();
             router.push('/login');
             return Promise.reject(refreshError);
           }
         } else {
-          // Refresh Token이 없으면 로그인 페이지로 리다이렉션
+          // 리프레시 토큰이 없으면 로그인 페이지로 리다이렉트
           console.error('Refresh Token이 없습니다. 로그아웃 처리.');
           localStorage.clear();
           router.push('/login');
@@ -238,7 +238,6 @@ export const addPayment = async (paymentData) => {
  */
 export const getPaymentsByGroupId = async (groupId) => {
   try {
-      // 백엔드 PaymentController의 GET /api/v1/moims/{moimId}/payments에 맞춤
       const response = await moimApi.get(`/moims/${groupId}/payments`);
       return response.data;
   } catch (error) {
